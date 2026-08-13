@@ -20,6 +20,8 @@ export async function POST() {
       status: response.status,
     });
   } catch (error) {
+    console.error("Homepage UAE API Error:", error);
+
     return NextResponse.json(
       {
         status: false,
