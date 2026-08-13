@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PlaneTakeoff, ArrowRight } from "lucide-react";
+import { getHolidaysUrl } from "../utils/holidayHelper";
 
 const dubaiPlaces = [
   {
@@ -28,18 +29,40 @@ const dubaiPlaces = [
 
 export function JeniTravelDeals() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [targetUrl, setTargetUrl] = useState(
+    process.env.NEXT_PUBLIC_HOLIDAYS_URL || "https://holidays.jenideals.com/holidays"
+  );
 
   useEffect(() => {
+    const updateUrl = () => {
+      setTargetUrl(getHolidaysUrl());
+    };
+
+    updateUrl();
+    window.addEventListener("auth-change", updateUrl);
+    window.addEventListener("storage", updateUrl);
+
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % dubaiPlaces.length);
     }, 4000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("auth-change", updateUrl);
+      window.removeEventListener("storage", updateUrl);
+    };
   }, []);
+
+  const handleClick = () => {
+    const freshUrl = getHolidaysUrl();
+    setTargetUrl(freshUrl);
+  };
 
   return (
     <section className="mx-auto max-w-shell px-4 md:px-6 pt-6">
       <a 
-        href={process.env.NEXT_PUBLIC_HOLIDAYS_URL || "https://jenideals.com/jeniNewVersion/holidays"} 
+        href={targetUrl}
+        onClick={handleClick}
         target="_blank" 
         rel="noopener noreferrer"
         className="group block relative overflow-hidden rounded-2xl cursor-pointer"

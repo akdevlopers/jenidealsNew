@@ -10,6 +10,7 @@ import { Footer } from '../../src/components/desktop/Footer'
 import { useAuth } from '../../src/context/AuthContext'
 import { useCountry } from '../../src/context/CountryContext'
 import { orderService } from '../../src/services/orderService'
+import { getHolidaysUrl } from '../../src/utils/holidayHelper'
 
 export default function TourBookingsPage() {
   const [isMobile, setIsMobile] = useState(false)
@@ -161,7 +162,7 @@ export default function TourBookingsPage() {
       <h2 className="text-xl font-semibold text-fg mb-2">No Tour Bookings</h2>
       <p className="text-sm text-fg-muted mb-6">You haven&apos;t booked any tours yet. Explore amazing destinations!</p>
       <button
-        onClick={() => window.open(process.env.NEXT_PUBLIC_HOLIDAYS_URL || 'https://jenideals.com/jeniNewVersion/holidays', '_blank')}
+        onClick={() => window.open(getHolidaysUrl(), '_blank')}
         className="rounded-lg bg-orange px-6 py-2.5 text-sm font-medium text-white active:bg-orange-deep"
       >
         Browse Tours
@@ -290,7 +291,7 @@ export default function TourBookingsPage() {
             </div>
           </div>
           <button
-            onClick={() => window.open(process.env.NEXT_PUBLIC_HOLIDAYS_URL || 'https://jenideals.com/jeniNewVersion/holidays', '_blank')}
+            onClick={() => window.open(getHolidaysUrl(), '_blank')}
             className="rounded-lg bg-orange px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-deep"
           >
             Browse Tours

@@ -3,6 +3,7 @@
 import { ShieldCheck, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { LogoMark, Wordmark } from "./Logo";
+import { getHolidaysUrl } from "../../utils/holidayHelper";
 
 const cols = [
   { title: "Shop", links: ["All Categories", "Today's Deals", "New Arrivals", "Best Sellers", "Travel Deals"] },
@@ -23,7 +24,7 @@ const getLinkHref = (label) => {
     case "best sellers":
       return "/products?sort=rating";
     case "travel deals":
-      return process.env.NEXT_PUBLIC_HOLIDAYS_URL || "https://jenideals.com/jeniNewVersion/holidays";
+      return getHolidaysUrl();
     case "gift cards":
       return "/products?category=gift-cards";
     case "coupons":
