@@ -98,11 +98,23 @@ function OrderDetailsContent() {
       const response = await orderService.getOrderDetails(orderId, user.id, country.id)
       
       if (response.status && response.Data) {
+        const orderDetails = response.Data.orderDetails || {}
+        const productDetails = response.Data.productDetails || []
+        const shippingDetails = response.Data.shippingDetails || {}
+
         const orderData = {
-          ...response.Data.orderDetails,
-          productDetails: response.Data.productDetails,
-          shippingDetails: response.Data.shippingDetails,
-          ...response.Data.shippingDetails
+          ...orderDetails,
+          productDetails,
+          shippingDetails,
+          ...shippingDetails,
+          id: orderDetails.id || orderId,
+          payment_status: orderDetails.payment_status || response.Data.payment_status || 'pending',
+          payment_order_id: orderDetails.payment_order_id || '',
+          transaction_id: orderDetails.transaction_id || null,
+          totaltransactionamount: orderDetails.totaltransactionamount || '0',
+          created_at: orderDetails.created_at || '',
+          order_status: orderDetails.order_status ?? 0,
+          track_status: orderDetails.track_status ?? 0,
         }
         setOrder(orderData)
       } else {
@@ -189,6 +201,58 @@ function OrderDetailsContent() {
     return iconMap[shippingStatus] || <Clock className="h-5 w-5 text-yellow-600" />
   }
 
+  const getPaymentStatusInfo = (paymentStatus) => {
+    const raw = String(paymentStatus || '').toLowerCase().trim()
+    
+    if (['paid', 'success', 'completed', 'captured', '1'].includes(raw)) {
+      return {
+        label: 'Paid',
+        badge: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+        dot: 'bg-emerald-500',
+        textColor: 'text-emerald-600',
+        icon: <CheckCircle className="h-4 w-4 text-emerald-600" />
+      }
+    }
+    
+    if (['failed', 'cancelled', 'canceled', 'rejected', 'declined'].includes(raw)) {
+      return {
+        label: 'Failed',
+        badge: 'bg-rose-100 text-rose-800 border-rose-300',
+        dot: 'bg-rose-500',
+        textColor: 'text-rose-600',
+        icon: <XCircle className="h-4 w-4 text-rose-600" />
+      }
+    }
+    
+    if (['refunded', 'reversed'].includes(raw)) {
+      return {
+        label: 'Refunded',
+        badge: 'bg-purple-100 text-purple-800 border-purple-300',
+        dot: 'bg-purple-500',
+        textColor: 'text-purple-600',
+        icon: <CheckCircle className="h-4 w-4 text-purple-600" />
+      }
+    }
+
+    if (['processing', 'in_progress', 'processing_payment'].includes(raw)) {
+      return {
+        label: 'Processing',
+        badge: 'bg-blue-100 text-blue-800 border-blue-300',
+        dot: 'bg-blue-500',
+        textColor: 'text-blue-600',
+        icon: <Clock className="h-4 w-4 text-blue-600" />
+      }
+    }
+
+    return {
+      label: raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : 'Pending',
+      badge: 'bg-amber-100 text-amber-800 border-amber-300',
+      dot: 'bg-amber-500',
+      textColor: 'text-amber-600',
+      icon: <Clock className="h-4 w-4 text-amber-600" />
+    }
+  }
+
   const getStatusColor = (shippingStatus) => {
     const colorMap = {
       0: 'text-yellow-600 bg-yellow-100',
@@ -251,6 +315,8 @@ function OrderDetailsContent() {
   const statusIcon = getStatusIcon(overallShippingStatus)
   const statusColor = getStatusColor(overallShippingStatus)
   
+  const paymentInfo = getPaymentStatusInfo(order.payment_status)
+
   const amountText = order.totaltransactionamount || '0'
   const totalAmount = parseFloat(amountText.replace(/[^\d.]/g, ''))
 
@@ -283,18 +349,27 @@ function OrderDetailsContent() {
               <h1 className="font-bold text-fg text-xl sm:text-2xl mb-2">
                 Order Details
               </h1>
-              <div className="flex items-center gap-2 text-orange mb-1">
-                <Package className="h-4.5 w-4.5" />
-                <p className="text-base font-bold">#{order.payment_order_id}</p>
+              <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+                <div className="flex items-center gap-2 text-orange">
+                  <Package className="h-4.5 w-4.5" />
+                  <p className="text-base font-bold">#{order.payment_order_id}</p>
+                </div>
+                {/* Payment Status Badge on Left */}
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-extrabold shadow-2xs border ${paymentInfo.badge}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${paymentInfo.dot} animate-pulse`} />
+                  <span>Payment: {paymentInfo.label}</span>
+                </div>
               </div>
               <p className="text-xs text-fg-muted flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
                 Placed on {order.created_at}
               </p>
             </div>
+            
+            {/* Right side: Order Status Badge */}
             <div className={`self-start sm:self-center flex items-center gap-2 px-4 py-2 rounded-xl ${statusColor} shadow-xs border border-current/10`}>
               {statusIcon}
-              <span className="text-sm font-extrabold">{statusText}</span>
+              <span className="text-sm font-extrabold">Order: {statusText}</span>
             </div>
           </div>
         </div>
@@ -519,20 +594,29 @@ function OrderDetailsContent() {
               <h2 className="text-base font-bold text-fg">Payment Information</h2>
             </div>
             <div className="space-y-3">
-              <div className="flex items-center justify-between bg-surface-2 rounded-xl p-3">
-                <p className="text-sm text-fg-muted">Payment Status</p>
-                <p className={`text-sm font-bold ${
-                  order.payment_status === 'pending' ? 'text-orange' : 'text-green-600'
-                }`}>
-                  {order.payment_status?.toUpperCase() || 'N/A'}
-                </p>
-              </div>
-              {order.transaction_id && (
-                <div className="flex items-center justify-between bg-surface-2 rounded-xl p-3">
-                  <p className="text-sm text-fg-muted">Transaction ID</p>
-                  <p className="text-xs font-mono text-fg font-semibold">{order.transaction_id}</p>
+              <div className="flex items-center justify-between bg-surface-2 rounded-xl p-3.5">
+                <p className="text-sm text-fg-muted font-medium">Payment Status</p>
+                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-extrabold uppercase tracking-wide border ${paymentInfo.badge}`}>
+                  <span className={`w-2 h-2 rounded-full ${paymentInfo.dot} animate-pulse`} />
+                  <span>{paymentInfo.label}</span>
                 </div>
-              )}
+              </div>
+              <div className="flex items-center justify-between bg-surface-2 rounded-xl p-3.5">
+                <p className="text-sm text-fg-muted font-medium">Payment Order ID</p>
+                <p className="text-xs font-mono text-fg font-semibold">{order.payment_order_id || 'N/A'}</p>
+              </div>
+              <div className="flex items-center justify-between bg-surface-2 rounded-xl p-3.5">
+                <p className="text-sm text-fg-muted font-medium">Transaction ID</p>
+                {order.transaction_id ? (
+                  <p className="text-xs font-mono text-fg font-semibold">{order.transaction_id}</p>
+                ) : (
+                  <p className="text-xs text-fg-subtle italic">Pending payment confirmation</p>
+                )}
+              </div>
+              <div className="flex items-center justify-between bg-surface-2 rounded-xl p-3.5">
+                <p className="text-sm text-fg-muted font-medium">Total Amount</p>
+                <p className="text-sm font-extrabold text-navy">{formatPrice(totalAmount)}</p>
+              </div>
             </div>
           </div>
 

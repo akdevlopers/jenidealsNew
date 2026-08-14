@@ -41,15 +41,28 @@ export function MobileHeader({ onOpenMenu, showSearch = true, showBack = false, 
   // Fetch user's default address when authenticated or country changes
   useEffect(() => {
     if (isCountryLoading || !country) return;
+
     const fetchDefaultAddress = async () => {
-      if (isAuthenticated && user?.id) {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const savedUserStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      let activeUser = user;
+      if (!activeUser && savedUserStr) {
         try {
-          const response = await addressService.getAddresses(user.id, country.id);
-          if (response.status && response.Data?.addressList) {
-            const defaultAddr = response.Data.addressList.find(
+          activeUser = JSON.parse(savedUserStr);
+        } catch (e) {}
+      }
+
+      const isAuth = isAuthenticated || Boolean(token && activeUser);
+
+      if (isAuth && activeUser?.id) {
+        try {
+          const response = await addressService.getAddresses(activeUser.id, country.id);
+          if (response.status && response.Data?.addressList && response.Data.addressList.length > 0) {
+            const list = response.Data.addressList;
+            const defaultAddr = list.find(
               (addr) => addr.make_default == 1 || addr.isDefaultAddress == 1 || addr.is_default_address == 1
             );
-            setDefaultAddress(defaultAddr || null);
+            setDefaultAddress(defaultAddr || list[0] || null);
           } else {
             setDefaultAddress(null);
           }
@@ -60,8 +73,20 @@ export function MobileHeader({ onOpenMenu, showSearch = true, showBack = false, 
         setDefaultAddress(null);
       }
     };
+
     fetchDefaultAddress();
-  }, [isAuthenticated, user, country?.id, isCountryLoading]);
+
+    const handleAddressUpdate = () => {
+      fetchDefaultAddress();
+    };
+
+    window.addEventListener('auth-change', handleAddressUpdate);
+    window.addEventListener('address-change', handleAddressUpdate);
+    return () => {
+      window.removeEventListener('auth-change', handleAddressUpdate);
+      window.removeEventListener('address-change', handleAddressUpdate);
+    };
+  }, [isAuthenticated, user?.id, country?.id, isCountryLoading]);
 
   // Fetch suggestions as user types (debounced)
   useEffect(() => {
@@ -160,10 +185,10 @@ export function MobileHeader({ onOpenMenu, showSearch = true, showBack = false, 
               <span className="flex items-center gap-1 text-[13px] font-semibold leading-none text-white mt-0.5">
                 {isCountryLoading || !country ? (
                   "Loading..."
-                ) : defaultAddress ? (
-                  `${defaultAddress.city || defaultAddress.area || defaultAddress.state || country.city}, ${country.name}`
+                ) : defaultAddress && (defaultAddress.city || defaultAddress.area || defaultAddress.state) ? (
+                  `${(defaultAddress.city || defaultAddress.area || defaultAddress.state).trim()}, ${country.name}`
                 ) : (
-                  `${country.city}, ${country.name}`
+                  country.name
                 )}
                 <ChevronDown className="h-3 w-3 text-white/70" strokeWidth={2.25} />
               </span>

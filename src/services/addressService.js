@@ -1,5 +1,11 @@
 import { apiRequest } from '../lib/axios'
 
+const notifyAddressChange = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('address-change'))
+  }
+}
+
 export const addressService = {
   // Get all addresses for a user
   async getAddresses(userId, country) {
@@ -24,6 +30,7 @@ export const addressService = {
         method: 'POST',
         body: JSON.stringify(addressData)
       })
+      notifyAddressChange()
       return response
     } catch (error) {
       throw error
@@ -37,6 +44,7 @@ export const addressService = {
         method: 'POST',
         body: JSON.stringify(addressData)
       })
+      notifyAddressChange()
       return response
     } catch (error) {
       throw error
@@ -54,6 +62,7 @@ export const addressService = {
           country: country.toString()
         })
       })
+      notifyAddressChange()
       return response
     } catch (error) {
       throw error
@@ -87,6 +96,7 @@ export const addressService = {
         method: 'POST',
         body: JSON.stringify(payload)
       })
+      notifyAddressChange()
       return response
     } catch (error) {
       throw error

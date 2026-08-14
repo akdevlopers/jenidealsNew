@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@microsoft/clarity": "^1.0.2",
     "@studio-freight/lenis": "^1.0.42",
     "axios": "^1.18.1",
     "lucide-react": "^1.23.0",

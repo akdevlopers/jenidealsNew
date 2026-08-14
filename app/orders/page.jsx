@@ -171,8 +171,8 @@ export default function OrdersPage() {
                 {order.created_at}
               </p>
             </div>
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor} whitespace-nowrap`}>
-              {statusText}
+            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${statusColor} whitespace-nowrap`}>
+              Order: {statusText}
             </span>
           </div>
 
@@ -208,13 +208,29 @@ export default function OrdersPage() {
           {/* Footer Row */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-fg-muted mb-1">
-                {order.payment_method === 'COD' || order.payment_method === 'cod' 
-                  ? 'Cash on Delivery' 
-                  : order.payment_method === 'nomod' 
-                    ? 'Online Payment' 
-                    : order.payment_method?.toUpperCase() || 'N/A'}
-              </p>
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                <p className="text-xs text-fg-muted">
+                  {order.payment_method === 'COD' || order.payment_method === 'cod' 
+                    ? 'Cash on Delivery' 
+                    : order.payment_method === 'nomod' 
+                      ? 'Online Payment' 
+                      : order.payment_method?.toUpperCase() || 'N/A'}
+                </p>
+                {order.payment_status && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border inline-flex items-center gap-1 ${
+                    ['paid', 'success', 'completed'].includes(String(order.payment_status).toLowerCase())
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    <span className={`w-1 h-1 rounded-full ${
+                      ['paid', 'success', 'completed'].includes(String(order.payment_status).toLowerCase())
+                        ? 'bg-emerald-500'
+                        : 'bg-amber-500'
+                    }`} />
+                    Payment: {String(order.payment_status).charAt(0).toUpperCase() + String(order.payment_status).slice(1)}
+                  </span>
+                )}
+              </div>
               <p className="text-lg font-bold text-fg">
                 {formatPrice(amount)}
               </p>
@@ -262,7 +278,7 @@ export default function OrdersPage() {
                 </p>
               </div>
               <span className={`text-sm font-bold px-4 py-2 rounded-xl shadow-sm ${statusColor}`}>
-                {statusText}
+                Order: {statusText}
               </span>
             </div>
 
@@ -271,7 +287,7 @@ export default function OrdersPage() {
             </h3>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-sm text-fg-muted bg-surface-2 px-3 py-1.5 rounded-lg font-medium">
                   Qty: {order.quantity}
                 </span>
@@ -280,13 +296,27 @@ export default function OrdersPage() {
                     +{totalItems - 1} more item{totalItems - 1 > 1 ? 's' : ''}
                   </span>
                 )}
-                <span className="text-xs text-fg-muted bg-surface-2 px-3 py-1.5 rounded-lg">
+                <span className="text-xs text-fg-muted bg-surface-2 px-3 py-1.5 rounded-lg font-medium">
                   {order.payment_method === 'COD' || order.payment_method === 'cod' 
                     ? 'Cash on Delivery' 
                     : order.payment_method === 'nomod' 
                       ? 'Online Payment' 
                       : order.payment_method?.toUpperCase() || 'N/A'}
                 </span>
+                {order.payment_status && (
+                  <span className={`text-xs font-bold px-3 py-1.5 rounded-lg border inline-flex items-center gap-1.5 ${
+                    ['paid', 'success', 'completed'].includes(String(order.payment_status).toLowerCase())
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      ['paid', 'success', 'completed'].includes(String(order.payment_status).toLowerCase())
+                        ? 'bg-emerald-500'
+                        : 'bg-amber-500'
+                    }`} />
+                    Payment: {String(order.payment_status).charAt(0).toUpperCase() + String(order.payment_status).slice(1)}
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-4">
