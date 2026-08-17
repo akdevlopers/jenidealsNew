@@ -12,13 +12,11 @@ import { Footer } from '../../src/components/desktop/Footer'
 import { useCart } from '../../src/context/CartContext'
 import { useCountry } from '../../src/context/CountryContext'
 import { useAuth } from '../../src/context/AuthContext'
-import { checkoutService } from '../../src/services/checkoutService'
 
 function CartContent() {
   const [isMobile, setIsMobile] = useState(false)
-  const [shippingCharge, setShippingCharge] = useState(0)
   const { cart, updateQuantity, removeFromCart, clearCart, getCartTotal } = useCart()
-  const { price: formatPrice, country, isLoading: isCountryLoading } = useCountry()
+  const { price: formatPrice } = useCountry()
   const { isAuthenticated } = useAuth()
   const router = useRouter()
 
@@ -30,24 +28,6 @@ function CartContent() {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
-
-  useEffect(() => {
-    const fetchCharges = async () => {
-      if (!country) return
-      try {
-        const response = await checkoutService.getPaymentCharges(getCartTotal().toFixed(2), '', country.id)
-        if (response.status && response.Data) {
-          const charges = response.Data
-          const shipping = charges.find(c => c.name === 'Shipping Charge')?.value || 0
-          setShippingCharge(parseFloat(shipping))
-        }
-      } catch (error) {
-      }
-    }
-    if (!isCountryLoading && country) {
-      fetchCharges()
-    }
-  }, [country?.id, isCountryLoading])
 
   const handleOpenMenu = () => {
     router.push('/categories')
@@ -74,7 +54,7 @@ function CartContent() {
 
     return (
       <div key={item.id} className="flex gap-3 p-3 bg-surface rounded-lg border border-line mb-3">
-        <div 
+        <div
           onClick={() => router.push(`/product/${targetProductId}`)}
           className="relative w-24 h-24 bg-surface-2 rounded flex-shrink-0 cursor-pointer"
         >
@@ -91,7 +71,7 @@ function CartContent() {
         </div>
         <div className="flex-1 flex flex-col justify-between">
           <div>
-            <h4 
+            <h4
               onClick={() => router.push(`/product/${targetProductId}`)}
               className="text-sm font-medium text-fg line-clamp-2 cursor-pointer hover:text-orange transition-colors"
             >
@@ -135,7 +115,7 @@ function CartContent() {
 
     return (
       <div key={item.id} className="flex items-center gap-6 p-4 bg-surface rounded-lg border border-line mb-4">
-        <div 
+        <div
           onClick={() => router.push(`/product/${targetProductId}`)}
           className="relative w-32 h-32 bg-surface-2 rounded flex-shrink-0 cursor-pointer"
         >
@@ -151,7 +131,7 @@ function CartContent() {
           )}
         </div>
         <div className="flex-1">
-          <h4 
+          <h4
             onClick={() => router.push(`/product/${targetProductId}`)}
             className="text-base font-medium text-fg cursor-pointer hover:text-orange transition-colors"
           >
@@ -217,22 +197,18 @@ function CartContent() {
               </div>
               <div className="lg:col-span-1">
                 <div className="bg-surface border border-line rounded-lg p-6 sticky top-8">
-          <h3 className="text-lg font-bold text-fg mb-4">Order Summary</h3>
-          <div className="space-y-3 mb-6">
-            <div className="flex justify-between text-sm text-fg">
-              <span>Subtotal</span>
-              <span>{formatPrice(getCartTotal())}</span>
-            </div>
-            <div className="flex justify-between text-sm text-fg-muted">
-              <span>Shipping</span>
-              <span>{shippingCharge === 0 ? 'Free' : formatPrice(shippingCharge)}</span>
-            </div>
-            <div className="border-t border-line pt-3 flex justify-between text-base font-bold text-fg">
-              <span>Total</span>
-              <span>{formatPrice(getCartTotal() + shippingCharge)}</span>
-            </div>
-          </div>
-                  <button 
+                  <h3 className="text-lg font-bold text-fg mb-4">Order Summary</h3>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-sm text-fg">
+                      <span>Subtotal</span>
+                      <span>{formatPrice(getCartTotal())}</span>
+                    </div>
+                    <div className="border-t border-line pt-3 flex justify-between text-base font-bold text-fg">
+                      <span>Total</span>
+                      <span>{formatPrice(getCartTotal())}</span>
+                    </div>
+                  </div>
+                  <button
                     onClick={() => {
                       if (!isAuthenticated) {
                         router.push('/user/login')
@@ -286,16 +262,12 @@ function CartContent() {
                   <span>Subtotal</span>
                   <span>{formatPrice(getCartTotal())}</span>
                 </div>
-                <div className="flex justify-between text-sm text-fg-muted">
-                  <span>Shipping</span>
-                  <span>{shippingCharge === 0 ? 'Free' : formatPrice(shippingCharge)}</span>
-                </div>
                 <div className="border-t border-line pt-2 flex justify-between text-base font-bold text-fg">
                   <span>Total</span>
-                  <span>{formatPrice(getCartTotal() + shippingCharge)}</span>
+                  <span>{formatPrice(getCartTotal())}</span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   if (!isAuthenticated) {
                     router.push('/user/login')
