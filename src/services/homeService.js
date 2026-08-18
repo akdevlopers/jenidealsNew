@@ -130,7 +130,6 @@ export const getHomepageData = async (countryId = '1') => {
         banners: extractList(data.banners || data.banner),
         banners_web: extractList(data.banners_web || data.banner_web || data.bannersWeb),
         collections: extractList(data.collections || data.collection),
-        featured_collections: extractList(data.featuredCollections || data.featured_collections || []),
         flash_deals: addAttributeIdToProducts(extractList(flashSaleProducts)),
         flashsale_info: {
           remaining_seconds: remainingSeconds,
@@ -541,6 +540,10 @@ export const getProductDetails = async (productId, countryId = '1') => {
           product_name: details.name || details.product_name,
           category_id: details.category_id,
           subcategory: details.subcategory,
+          child_subcategory_id: details.child_subcategory_id,
+          categoryName: details.categoryName,
+          subcategoryName: details.subcategoryName,
+          childSubcategoryName: details.childSubcategoryName,
           product_img_url: details.product_img || details.product_img_url,
           description: details.description,
           offer_price: firstAttr.price || details.price || 0,
@@ -551,6 +554,14 @@ export const getProductDetails = async (productId, countryId = '1') => {
           brand: details.categoryName || 'Jeni Deals',
           sku: details.sku || `JD-C${details.id}`,
           multi_image: JSON.stringify(imageUrls),
+          delivery: apiData.delivery || details.delivery || '',
+          delivery_policy: apiData.delivery || details.delivery || '',
+          returnPolicy: apiData.returnPolicy || details.returnPolicy || '',
+          return_policy: apiData.returnPolicy || details.returnPolicy || '',
+          warranty: apiData.warranty || details.warranty || '',
+          productAttributeDetails: attributes,
+          attributes: attributes,
+          specifications: details.specifications || apiData.specifications || [],
           raw: apiData
         };
       }
@@ -653,36 +664,38 @@ export const getCategoriesWithSubAndChild = async (countryId = '1') => {
 };
 
 export const getFlashSaleProducts = async (countryId = '1') => {
-  try {
-    const endpoint = `/allflashsaleproductlist?country=${countryId}`;
-    const response = await axiosInstance.post(endpoint, {
-      country: countryId
-    });
+  return getCachedOrFetch(`flashsale_${countryId}`, async () => {
+    try {
+      const endpoint = `/allflashsaleproductlist?country=${countryId}`;
+      const response = await axiosInstance.post(endpoint, {
+        country: countryId
+      });
 
-    // Check both response structures
-    const rawData = response.Data || response.data?.Data || response.data?.data || response.data;
+      // Check both response structures
+      const rawData = response.Data || response.data?.Data || response.data?.data || response.data;
 
-    // Extract products list (it has products.data according to JSON)
-    let productList = rawData?.products?.data || rawData?.products || [];
+      // Extract products list (it has products.data according to JSON)
+      let productList = rawData?.products?.data || rawData?.products || [];
 
-    // Add attribute_id for each flash product
-    productList = productList.map(product => {
-      const attributes = product.productAttributeDetails || (product.raw && product.raw.productAttributeDetails) || [];
-      const firstAttr = attributes[0] || {};
+      // Add attribute_id for each flash product
+      productList = productList.map(product => {
+        const attributes = product.productAttributeDetails || (product.raw && product.raw.productAttributeDetails) || [];
+        const firstAttr = attributes[0] || {};
+        return {
+          ...product,
+          attribute_id: firstAttr.id || product.attribute_id || product.attributeId || product.id,
+          raw: product.raw || product
+        };
+      });
+
+      // Return formatted flash sale object
       return {
-        ...product,
-        attribute_id: firstAttr.id || product.attribute_id || product.attributeId || product.id,
-        raw: product.raw || product
+        title: rawData?.title || 'Flash Sale',
+        remaining_seconds: rawData?.remaining_seconds || 0,
+        products: productList
       };
-    });
-
-    // Return formatted flash sale object
-    return {
-      title: rawData?.title || 'Flash Sale',
-      remaining_seconds: rawData?.remaining_seconds || 0,
-      products: productList
-    };
-  } catch (error) {
-    throw error;
-  }
+    } catch (error) {
+      throw error;
+    }
+  });
 };

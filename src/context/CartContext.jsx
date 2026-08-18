@@ -55,22 +55,28 @@ export function CartProvider({ children }) {
     if (!product || !product.id) return
     setCart(prevCart => {
       const currentCart = prevCart || []
-      const existingItem = currentCart.find(item => item && item.id === product.id)
       
-      // Extract proper attribute_id from productAttributeDetails
+      // Extract proper attribute_id from productAttributeDetails or explicit selection
       const attributes = product.productAttributeDetails || (product.raw && product.raw.productAttributeDetails) || [];
       const firstAttr = attributes[0] || {};
+      const targetAttrId = product.attribute_id || product.attributeId || product.product_attribute_id || product.variant_id || firstAttr.id || product.id;
+      
       const productWithAttribute = {
         ...product,
-        attribute_id: firstAttr.id || product.attribute_id || product.attributeId || product.product_attribute_id || product.variant_id || product.id,
+        attribute_id: targetAttrId,
         raw: product.raw || product
       }
+
+      // Check if this item with this specific attribute is already in cart
+      const existingIndex = currentCart.findIndex(item =>
+        item && item.id === product.id && (String(item.attribute_id || '') === String(targetAttrId || ''))
+      )
       
-      if (existingItem) {
-        // Update quantity if item already in cart, and also ensure attribute_id is set
-        return currentCart.map(item =>
-          item && item.id === product.id
-            ? { ...item, quantity: (item.quantity || 0) + quantity, attribute_id: productWithAttribute.attribute_id }
+      if (existingIndex > -1) {
+        // Update quantity if matching item and variant already in cart
+        return currentCart.map((item, idx) =>
+          idx === existingIndex
+            ? { ...item, ...productWithAttribute, quantity: (item.quantity || 0) + quantity }
             : item
         )
       } else {
@@ -80,14 +86,20 @@ export function CartProvider({ children }) {
     })
   }
 
-  const removeFromCart = (productIds) => {
+  const removeFromCart = (productIds, attributeId = null) => {
     if (!productIds) return
-    const idsToRemove = Array.isArray(productIds)
-      ? productIds.map(id => String(id))
-      : [String(productIds)]
-
     setCart(prevCart => {
-      const updated = (prevCart || []).filter(item => item && item.id && !idsToRemove.includes(String(item.id)))
+      const updated = (prevCart || []).filter(item => {
+        if (!item || !item.id) return false
+        if (attributeId !== null && attributeId !== undefined) {
+          return !(String(item.id) === String(productIds) && String(item.attribute_id) === String(attributeId))
+        }
+        if (Array.isArray(productIds)) {
+          const ids = productIds.map(id => String(id))
+          return !ids.includes(String(item.id))
+        }
+        return String(item.id) !== String(productIds)
+      })
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updated))
@@ -98,16 +110,20 @@ export function CartProvider({ children }) {
     })
   }
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = (productId, quantity, attributeId = null) => {
     if (quantity <= 0) {
-      removeFromCart(productId)
+      removeFromCart(productId, attributeId)
       return
     }
     
     setCart(prevCart =>
-      (prevCart || []).map(item =>
-        item && item.id === productId ? { ...item, quantity } : item
-      )
+      (prevCart || []).map(item => {
+        if (!item || item.id !== productId) return item
+        if (attributeId !== null && attributeId !== undefined) {
+          return String(item.attribute_id) === String(attributeId) ? { ...item, quantity } : item
+        }
+        return { ...item, quantity }
+      })
     )
   }
 
@@ -133,8 +149,14 @@ export function CartProvider({ children }) {
     return (cart || []).reduce((count, item) => count + (item?.quantity || 0), 0)
   }
 
-  const isInCart = (productId) => {
-    return (cart || []).some(item => item && item.id === productId)
+  const isInCart = (productId, attributeId = null) => {
+    return (cart || []).some(item => {
+      if (!item || item.id !== productId) return false
+      if (attributeId !== null && attributeId !== undefined) {
+        return String(item.attribute_id) === String(attributeId)
+      }
+      return true
+    })
   }
 
   return (

@@ -51,22 +51,24 @@ function CartContent() {
     const price = parseFloat(item.offer_price || item.price || 0)
     const totalPrice = price * item.quantity
     const targetProductId = item.product_id || item.id
+    const itemKey = `${item.id}_${item.attribute_id || ''}`
 
     return (
-      <div key={item.id} className="flex gap-3 p-3 bg-surface rounded-lg border border-line mb-3">
+      <div key={itemKey} className="flex gap-3 p-3 bg-surface rounded-lg border border-line mb-3">
         <div
           onClick={() => router.push(`/product/${targetProductId}`)}
-          className="relative w-24 h-24 bg-surface-2 rounded flex-shrink-0 cursor-pointer"
+          className="relative w-24 h-24 bg-[#FAF5FF] rounded flex-shrink-0 cursor-pointer overflow-hidden flex items-center justify-center p-1.5"
         >
-          <div className="absolute inset-0 grid place-items-center">
-            <Package className="h-8 w-8 text-fg-subtle" strokeWidth={1.25} />
-          </div>
-          {item.product_img_url && (
+          {item.product_img_url ? (
             <img
               src={item.product_img_url}
               alt={item.product_name}
-              className="absolute inset-0 h-full w-full object-cover rounded"
+              className="h-full w-full object-contain rounded"
             />
+          ) : (
+            <div className="grid place-items-center">
+              <Package className="h-8 w-8 text-fg-subtle" strokeWidth={1.25} />
+            </div>
           )}
         </div>
         <div className="flex-1 flex flex-col justify-between">
@@ -77,26 +79,35 @@ function CartContent() {
             >
               {item.product_name}
             </h4>
-            <p className="text-xs text-fg-muted mt-1">{item.store_name || item.brand || 'Jeni Deals'}</p>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+              <span className="text-xs text-fg-muted">{item.store_name || item.brand || 'Jeni Deals'}</span>
+              {item.selected_attribute && typeof item.selected_attribute === 'object' && (
+                Object.entries(item.selected_attribute).map(([k, v]) => (
+                  <span key={k} className="inline-block text-[10.5px] font-bold bg-orange-tint/40 text-orange-deep px-1.5 py-0.5 rounded border border-orange/20">
+                    {k}: {v}
+                  </span>
+                ))
+              )}
+            </div>
           </div>
           <div className="flex items-end justify-between mt-2">
             <span className="text-sm font-bold text-fg">{formatPrice(totalPrice)}</span>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                onClick={() => updateQuantity(item.id, item.quantity - 1, item.attribute_id)}
                 className="h-7 w-7 grid place-items-center rounded bg-surface-2 text-fg active:bg-line"
               >
                 <Minus className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
               <span className="text-sm font-medium text-fg w-6 text-center">{item.quantity}</span>
               <button
-                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                onClick={() => updateQuantity(item.id, item.quantity + 1, item.attribute_id)}
                 className="h-7 w-7 grid place-items-center rounded bg-navy text-white active:bg-orange-deep"
               >
                 <Plus className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
               <button
-                onClick={() => removeFromCart(item.id)}
+                onClick={() => removeFromCart(item.id, item.attribute_id)}
                 className="h-7 w-7 grid place-items-center rounded text-fg-muted hover:text-sale"
               >
                 <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -112,53 +123,66 @@ function CartContent() {
     const price = parseFloat(item.offer_price || item.price || 0)
     const totalPrice = price * item.quantity
     const targetProductId = item.product_id || item.id
+    const itemKey = `${item.id}_${item.attribute_id || ''}`
 
     return (
-      <div key={item.id} className="flex items-center gap-6 p-4 bg-surface rounded-lg border border-line mb-4">
+      <div key={itemKey} className="flex items-center gap-5 p-4 bg-surface rounded-xl border border-line mb-3.5 shadow-2xs hover:border-line/80 transition-all">
         <div
           onClick={() => router.push(`/product/${targetProductId}`)}
-          className="relative w-32 h-32 bg-surface-2 rounded flex-shrink-0 cursor-pointer"
+          className="relative w-24 h-24 bg-[#FAF5FF] rounded-lg flex-shrink-0 cursor-pointer overflow-hidden flex items-center justify-center p-2 border border-line/40"
         >
-          <div className="absolute inset-0 grid place-items-center">
-            <Package className="h-10 w-10 text-fg-subtle" strokeWidth={1.25} />
-          </div>
-          {item.product_img_url && (
+          {item.product_img_url ? (
             <img
               src={item.product_img_url}
               alt={item.product_name}
-              className="absolute inset-0 h-full w-full object-cover rounded hover:scale-105 transition-transform"
+              className="h-full w-full object-contain rounded hover:scale-105 transition-transform"
             />
+          ) : (
+            <div className="grid place-items-center">
+              <Package className="h-8 w-8 text-fg-subtle" strokeWidth={1.25} />
+            </div>
           )}
         </div>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0 pr-2">
           <h4
             onClick={() => router.push(`/product/${targetProductId}`)}
-            className="text-base font-medium text-fg cursor-pointer hover:text-orange transition-colors"
+            title={item.product_name}
+            className="text-[15px] font-semibold text-fg line-clamp-2 cursor-pointer hover:text-orange transition-colors leading-snug"
           >
             {item.product_name}
           </h4>
-          <p className="text-sm text-fg-muted mt-1">{item.store_name || item.brand || 'Jeni Deals'}</p>
+          <div className="flex flex-wrap items-center gap-2 mt-1.5">
+            <span className="text-xs text-fg-muted">{item.store_name || item.brand || 'Jeni Deals'}</span>
+            {item.selected_attribute && typeof item.selected_attribute === 'object' && (
+              Object.entries(item.selected_attribute).map(([k, v]) => (
+                <span key={k} className="inline-flex items-center text-[11px] font-bold bg-orange-tint/40 text-orange-deep px-2 py-0.5 rounded-md border border-orange/20">
+                  {k}: {v}
+                </span>
+              ))
+            )}
+          </div>
         </div>
-        <div className="text-sm font-bold text-fg flex-shrink-0">{formatPrice(price)}</div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="text-sm font-bold text-fg flex-shrink-0 text-right min-w-[85px]">{formatPrice(price)}</div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
-            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-            className="h-9 w-9 grid place-items-center rounded bg-surface-2 text-fg hover:bg-line"
+            onClick={() => updateQuantity(item.id, item.quantity - 1, item.attribute_id)}
+            className="h-8 w-8 grid place-items-center rounded-lg bg-surface-2 text-fg hover:bg-line transition-colors active:scale-95"
           >
-            <Minus className="h-4 w-4" strokeWidth={2} />
+            <Minus className="h-3.5 w-3.5" strokeWidth={2} />
           </button>
-          <span className="text-sm font-medium text-fg w-8 text-center">{item.quantity}</span>
+          <span className="text-sm font-bold text-fg w-7 text-center">{item.quantity}</span>
           <button
-            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-            className="h-9 w-9 grid place-items-center rounded bg-navy text-white hover:bg-orange-deep"
+            onClick={() => updateQuantity(item.id, item.quantity + 1, item.attribute_id)}
+            className="h-8 w-8 grid place-items-center rounded-lg bg-navy text-white hover:bg-orange-deep transition-colors active:scale-95"
           >
-            <Plus className="h-4 w-4" strokeWidth={2} />
+            <Plus className="h-3.5 w-3.5" strokeWidth={2} />
           </button>
         </div>
-        <div className="text-base font-bold text-fg flex-shrink-0">{formatPrice(totalPrice)}</div>
+        <div className="text-base font-bold text-fg flex-shrink-0 text-right min-w-[100px]">{formatPrice(totalPrice)}</div>
         <button
-          onClick={() => removeFromCart(item.id)}
-          className="h-9 w-9 grid place-items-center rounded text-fg-muted hover:text-sale flex-shrink-0"
+          onClick={() => removeFromCart(item.id, item.attribute_id)}
+          className="h-8 w-8 grid place-items-center rounded-lg text-fg-muted hover:text-sale hover:bg-sale/10 transition-colors flex-shrink-0 active:scale-95"
+          title="Remove item"
         >
           <Trash2 className="h-4 w-4" strokeWidth={1.75} />
         </button>

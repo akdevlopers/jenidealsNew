@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
-import { getCategoryList, getCategoriesWithSubAndChild, sortCategoriesByOrderBy } from "../services/homeService";
+import { getCategoryList, getCategoriesWithSubAndChild, sortCategoriesByOrderBy, getFlashSaleProducts } from "../services/homeService";
 
 export const countries = [
   { code: "in", name: "India", city: "Mumbai", currency: "₹", rate: 83, zipFormat: "400001", id: "1", phoneCode: "+91" },
@@ -30,6 +30,8 @@ export function CountryProvider({ children }) {
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [hasFlashDeals, setHasFlashDeals] = useState(false);
+  const [flashDealsCount, setFlashDealsCount] = useState(0);
   const { logout } = useAuth();
 
   // First, determine the user's country from localStorage or IP detection or default
@@ -72,7 +74,7 @@ export function CountryProvider({ children }) {
     determineCountry();
   }, []);
 
-  // Fetch categories only after country is set
+  // Fetch categories & flash sale products only after country is set
   useEffect(() => {
     if (!country) return; // Don't fetch until country is determined
 
@@ -86,7 +88,22 @@ export function CountryProvider({ children }) {
         setCategoriesLoading(false);
       }
     };
+
+    const fetchFlashDeals = async () => {
+      try {
+        const data = await getFlashSaleProducts(country.id);
+        const products = data?.products || [];
+        const count = products.length;
+        setFlashDealsCount(count);
+        setHasFlashDeals(count > 0);
+      } catch (error) {
+        setFlashDealsCount(0);
+        setHasFlashDeals(false);
+      }
+    };
+
     fetchCategories();
+    fetchFlashDeals();
   }, [country?.id]); // Only re-run if country.id changes
 
   const changeCountry = (newCountry) => {
@@ -131,7 +148,9 @@ export function CountryProvider({ children }) {
       price, 
       isLoading,
       categories,
-      categoriesLoading
+      categoriesLoading,
+      hasFlashDeals,
+      flashDealsCount
     }}>
       {children}
     </CountryCtx.Provider>

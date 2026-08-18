@@ -62,7 +62,7 @@ function HeaderSearchParamsSync({ setScope, displayCats }) {
 
 export function Header() {
   const router = useRouter();
-  const { country, price, categories: categoriesList, categoriesLoading } = useCountry();
+  const { country, price, categories: categoriesList, categoriesLoading, hasFlashDeals } = useCountry();
   const { getWishlistCount } = useWishlist();
   const { getCartCount } = useCart();
   const { isAuthenticated, logout, user } = useAuth();
@@ -508,19 +508,21 @@ export function Header() {
           </div>
         </div>
 
-        {/* Today's Deals - Fixed to the right */}
-        <div className="absolute right-8 top-0 h-[40px] flex items-center pointer-events-none">
-          <button 
-            onClick={() => router.push('/flash-deals')}
-            className="pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-full border border-orange/40 bg-navy-deep px-3 py-1 text-[12px] font-semibold text-orange-ring transition-colors hover:bg-orange/10 shadow-lg"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-orange" />
-            </span>
-            Today&apos;s Deals
-          </button>
-        </div>
+        {/* Today's Deals - Fixed to the right - Only show if hasFlashDeals is true (products > 0) */}
+        {hasFlashDeals && (
+          <div className="absolute right-8 top-0 h-[40px] flex items-center pointer-events-none">
+            <button 
+              onClick={() => router.push('/flash-deals')}
+              className="pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-full border border-orange/40 bg-navy-deep px-3 py-1 text-[12px] font-semibold text-orange-ring transition-colors hover:bg-orange/10 shadow-lg"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-orange" />
+              </span>
+              Today&apos;s Deals
+            </button>
+          </div>
+        )}
 
         {browseOpen && (
           <div

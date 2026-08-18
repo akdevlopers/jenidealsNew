@@ -320,9 +320,103 @@ function EnhancedProductReviews({ product, rating, reviewsCount }) {
   )
 }
 
+function formatAttributeOptionLabel(attr, fallbackIdx = 0) {
+  if (!attr) return `Option ${fallbackIdx + 1}`
+  if (attr.attributes && typeof attr.attributes === 'object') {
+    const entries = Object.entries(attr.attributes).filter(([_, v]) => Boolean(v))
+    if (entries.length > 0) {
+      return entries.map(([_, v]) => v).join(' / ')
+    }
+  }
+  if (typeof attr.attributes === 'string') {
+    try {
+      const parsed = JSON.parse(attr.attributes)
+      if (typeof parsed === 'object' && parsed !== null) {
+        const values = Object.values(parsed).filter(Boolean)
+        if (values.length > 0) return values.join(' / ')
+      }
+    } catch (e) {
+      if (attr.attributes.trim()) return attr.attributes.trim()
+    }
+  }
+  if (attr.name || attr.title || attr.variant_name || attr.size || attr.weight || attr.quantity || attr.color) {
+    return attr.name || attr.title || attr.variant_name || attr.size || attr.weight || attr.quantity || attr.color
+  }
+  return `Option ${fallbackIdx + 1}`
+}
+
+function AttributeSelector({ attributes, selectedAttribute, onSelectAttribute, formatPrice, compact = false }) {
+  if (!Array.isArray(attributes) || attributes.length === 0) return null
+
+  // Check if there are named attributes or multiple variants
+  const hasNamedAttributes = attributes.some(attr => {
+    if (attr?.attributes && typeof attr.attributes === 'object') {
+      return Object.keys(attr.attributes).length > 0
+    }
+    if (typeof attr?.attributes === 'string' && attr.attributes.trim()) {
+      return true
+    }
+    return false
+  })
+
+  // If only 1 variant and no named attributes, don't render selector
+  if (attributes.length <= 1 && !hasNamedAttributes) return null
+
+  // Determine group title (e.g. Quantity, Color, Size, Variant)
+  let groupTitle = 'Option'
+  for (const attr of attributes) {
+    if (attr?.attributes && typeof attr.attributes === 'object') {
+      const keys = Object.keys(attr.attributes)
+      if (keys.length > 0) {
+        groupTitle = keys.join(' / ')
+        break
+      }
+    }
+  }
+
+  const selectedDisplay = selectedAttribute
+    ? formatAttributeOptionLabel(selectedAttribute)
+    : (attributes[0] ? formatAttributeOptionLabel(attributes[0]) : '')
+
+  return (
+    <div className={compact ? "py-2" : "py-3"}>
+      {/* Header: Title — Selected Value */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="font-bold text-fg text-[14px]">{groupTitle}</span>
+        <span className="text-fg-subtle text-[13px] select-none">—</span>
+        <span className="text-fg-muted text-[14px] font-normal">{selectedDisplay}</span>
+      </div>
+
+      {/* Options Buttons */}
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+        {attributes.map((attr, idx) => {
+          const isSelected = selectedAttribute?.id === attr.id || (!selectedAttribute && idx === 0)
+          const label = formatAttributeOptionLabel(attr, idx)
+
+          return (
+            <button
+              key={attr.id || idx}
+              type="button"
+              onClick={() => onSelectAttribute(attr)}
+              className={`min-w-[80px] sm:min-w-[90px] px-4 sm:px-5 py-2.5 rounded-2xl text-[13px] sm:text-[13.5px] transition-all cursor-pointer text-center select-none ${
+                isSelected
+                  ? 'border-2 border-orange bg-surface text-orange font-bold shadow-2xs'
+                  : 'border border-line bg-surface text-fg font-medium hover:border-fg-muted/60 active:scale-95'
+              }`}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function ProductDetailPage() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [product, setProduct] = useState(null)
+  const [selectedAttribute, setSelectedAttribute] = useState(null)
   const [relatedProducts, setRelatedProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
@@ -337,15 +431,48 @@ export default function ProductDetailPage() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
-  const handleAddToCart = (product, qty) => {
-    if (isInCart(product.id)) {
+  const handleAddToCart = (prod, qty) => {
+    if (!prod) return
+    const attrId = selectedAttribute?.id || prod.attribute_id
+    if (isInCart(prod.id, attrId)) {
       router.push('/cart')
       return
     }
-    addToCart(product, qty)
+    const itemToAdd = {
+      ...prod,
+      attribute_id: attrId,
+      offer_price: offerPrice,
+      price: offerPrice,
+      orginal_rate: originalPrice,
+      mrp: originalPrice,
+      selected_attribute: selectedAttribute?.attributes || null,
+      selected_attribute_id: attrId
+    }
+    addToCart(itemToAdd, qty)
     setToastMessage('Added to Cart!')
     setShowToast(true)
     setTimeout(() => setShowToast(false), 2000)
+  }
+
+  const handleBuyNow = () => {
+    if (!product) return
+    const attrId = selectedAttribute?.id || product.attribute_id
+    const checkoutItem = {
+      ...product,
+      attribute_id: attrId,
+      offer_price: offerPrice,
+      price: offerPrice,
+      orginal_rate: originalPrice,
+      mrp: originalPrice,
+      selected_attribute: selectedAttribute?.attributes || null,
+      selected_attribute_id: attrId,
+      quantity: quantity,
+      selected_quantity: quantity
+    }
+    // Store in BOTH sessionStorage and localStorage for persistence across login
+    sessionStorage.setItem('buyNowItem', JSON.stringify(checkoutItem))
+    localStorage.setItem('buyNowItem', JSON.stringify(checkoutItem))
+    router.push('/checkout?buynow=true')
   }
 
   const handleShare = async () => {
@@ -412,6 +539,12 @@ export default function ProductDetailPage() {
       }
       
       setProduct(productData)
+      const attrs = productData?.productAttributeDetails || productData?.attributes || productData?.raw?.productAttributeDetails || []
+      if (Array.isArray(attrs) && attrs.length > 0) {
+        setSelectedAttribute(attrs[0])
+      } else {
+        setSelectedAttribute(null)
+      }
       
       if (productData?.category_id && productData?.subcategory) {
         try {
@@ -541,15 +674,23 @@ export default function ProductDetailPage() {
     )
   }
 
-  const offerPrice = parseFloat(product.offer_price || product.price || 0)
-  const originalPrice = parseFloat(product.orginal_rate || product.mrp || 0)
-  
-  const discount = originalPrice > offerPrice ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100) : 0
-  const rating = product.rating || product.average_rating || 0
-  const reviewsCount = product.reviews || product.review_count || 0
+  const attributesList = product?.productAttributeDetails || product?.attributes || product?.raw?.productAttributeDetails || []
+  const currentAttrId = selectedAttribute?.id || product?.attribute_id
 
-  const images = product.multi_image ? JSON.parse(product.multi_image) : []
-  const allImages = Array.from(new Set([product.product_img_url, ...images].filter(Boolean)))
+  const offerPrice = selectedAttribute && selectedAttribute.price !== undefined
+    ? parseFloat(selectedAttribute.price)
+    : parseFloat(product?.offer_price || product?.price || 0)
+
+  const originalPrice = selectedAttribute && (selectedAttribute.actual_price !== undefined || selectedAttribute.mrp !== undefined)
+    ? parseFloat(selectedAttribute.actual_price || selectedAttribute.mrp)
+    : parseFloat(product?.orginal_rate || product?.mrp || 0)
+
+  const discount = originalPrice > offerPrice ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100) : 0
+  const rating = product?.rating || product?.average_rating || 0
+  const reviewsCount = product?.reviews || product?.review_count || 0
+
+  const images = product?.multi_image ? (typeof product.multi_image === 'string' ? JSON.parse(product.multi_image) : product.multi_image) : []
+  const allImages = Array.from(new Set([product?.product_img_url, ...images].filter(Boolean)))
 
   const MobileUI = () => (
     <div className="md:hidden flex min-h-screen flex-col bg-bg">
@@ -672,6 +813,14 @@ export default function ProductDetailPage() {
             )}
           </div>
           <p className="text-[12px] text-fg-muted mb-1">Inclusive of all taxes</p>
+
+          {/* Mobile Variant / Attribute Selector */}
+          <AttributeSelector
+            attributes={attributesList}
+            selectedAttribute={selectedAttribute}
+            onSelectAttribute={setSelectedAttribute}
+            formatPrice={formatPrice}
+          />
         </div>
 
         {(deliveryText || returnPolicyText || warrantyText) && (
@@ -725,23 +874,55 @@ export default function ProductDetailPage() {
               {expandedSections.general ? <ChevronUp className="h-4 w-4 text-fg-muted" /> : <ChevronDown className="h-4 w-4 text-fg-muted" />}
             </button>
             {expandedSections.general && (
-              <div className="px-4 pb-3.5 flex flex-col gap-2.5">
-                <div className="flex justify-between py-1 border-b border-line/40">
-                  <span className="text-fg-muted text-[13px]">Name</span>
-                  <span className="text-fg font-medium text-[13px] truncate max-w-[60%]">{product.product_name}</span>
+              <div className="px-4 pb-3.5 divide-y divide-line/40">
+                <div className="grid grid-cols-12 py-2 text-[13px] items-start">
+                  <span className="col-span-4 text-fg-muted font-medium">Name</span>
+                  <span className="col-span-8 text-fg font-medium leading-snug">{product.product_name}</span>
                 </div>
                 {product.brand && (
-                  <div className="flex justify-between py-1 border-b border-line/40">
-                    <span className="text-fg-muted text-[13px]">Brand</span>
-                    <span className="text-fg font-medium text-[13px]">{product.brand}</span>
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
+                    <span className="col-span-4 text-fg-muted font-medium">Brand</span>
+                    <span className="col-span-8 text-fg font-medium">{product.brand}</span>
                   </div>
+                )}
+                {product.categoryName && (
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
+                    <span className="col-span-4 text-fg-muted font-medium">Category</span>
+                    <span className="col-span-8 text-fg font-medium">{product.categoryName}</span>
+                  </div>
+                )}
+                {product.subcategoryName && (
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
+                    <span className="col-span-4 text-fg-muted font-medium">Subcategory</span>
+                    <span className="col-span-8 text-fg font-medium">{product.subcategoryName}</span>
+                  </div>
+                )}
+                {product.childSubcategoryName && (
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
+                    <span className="col-span-4 text-fg-muted font-medium">Type</span>
+                    <span className="col-span-8 text-fg font-medium">{product.childSubcategoryName}</span>
+                  </div>
+                )}
+                {selectedAttribute?.attributes && typeof selectedAttribute.attributes === 'object' && (
+                  Object.entries(selectedAttribute.attributes).map(([k, v]) => (
+                    <div key={k} className="grid grid-cols-12 py-2 text-[13px] items-center">
+                      <span className="col-span-4 text-fg-muted font-medium">{k}</span>
+                      <span className="col-span-8 text-orange font-semibold">{v}</span>
+                    </div>
+                  ))
                 )}
                 {product.sku && (
-                  <div className="flex justify-between py-1">
-                    <span className="text-fg-muted text-[13px]">SKU</span>
-                    <span className="text-fg font-medium text-[13px]">{product.sku}</span>
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
+                    <span className="col-span-4 text-fg-muted font-medium">SKU</span>
+                    <span className="col-span-8 text-fg font-medium">{product.sku}</span>
                   </div>
                 )}
+                {Array.isArray(product.specifications) && product.specifications.map((spec, sIdx) => (
+                  <div key={sIdx} className="grid grid-cols-12 py-2 text-[13px] items-center">
+                    <span className="col-span-4 text-fg-muted font-medium">{spec.title || spec.name || spec.key || `Spec ${sIdx + 1}`}</span>
+                    <span className="col-span-8 text-fg font-medium">{spec.value || spec.description || ''}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -832,12 +1013,12 @@ export default function ProductDetailPage() {
         <button
           onClick={() => product && handleAddToCart(product, quantity)}
           className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg border py-2.5 px-1.5 text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
-            product && isInCart(product.id)
+            product && isInCart(product.id, currentAttrId)
               ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-xs'
               : 'border-navy bg-surface text-navy active:bg-navy active:text-white'
           }`}
         >
-          {product && isInCart(product.id) ? (
+          {product && isInCart(product.id, currentAttrId) ? (
             <>
               <Check className="h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
               <span className="whitespace-nowrap">Added to Cart</span>
@@ -851,19 +1032,7 @@ export default function ProductDetailPage() {
         </button>
 
         <button
-          onClick={() => {
-            if (product) {
-              const checkoutItem = {
-                ...product,
-                quantity: quantity,
-                selected_quantity: quantity
-              }
-              // Store in BOTH sessionStorage and localStorage for persistence across login
-              sessionStorage.setItem('buyNowItem', JSON.stringify(checkoutItem))
-              localStorage.setItem('buyNowItem', JSON.stringify(checkoutItem))
-              router.push('/checkout?buynow=true')
-            }
-          }}
+          onClick={handleBuyNow}
           className="flex-1 rounded-lg bg-orange py-2.5 px-2 text-[12px] sm:text-[13px] font-bold text-white active:bg-orange-deep transition-colors shadow whitespace-nowrap"
         >
           Buy now
@@ -978,6 +1147,16 @@ export default function ProductDetailPage() {
             </div>
             <p className="mt-1 text-[12.5px] text-fg-muted">Inclusive of all taxes · prices shown in {country.currency}</p>
 
+            {/* Desktop Center Column Variant Selector */}
+            <div className="mt-4 pt-3 border-t border-line">
+              <AttributeSelector
+                attributes={attributesList}
+                selectedAttribute={selectedAttribute}
+                onSelectAttribute={setSelectedAttribute}
+                formatPrice={formatPrice}
+              />
+            </div>
+
             <div className="mt-6 rounded-xl border border-line bg-surface p-4 shadow-xs">
               <h3 className="text-[13px] font-semibold uppercase tracking-wide text-fg-muted">Why you&apos;ll love it</h3>
               <ul className="mt-2.5 space-y-2">
@@ -1024,17 +1203,87 @@ export default function ProductDetailPage() {
                 />
               </div>
             )}
+
+            {/* Desktop Full Specifications */}
+            <div className="mt-6 rounded-xl border border-line bg-surface p-4 sm:p-5 shadow-xs">
+              <h3 className="text-[13px] font-bold text-fg-muted uppercase tracking-wider mb-3 pb-2 border-b border-line">
+                Full Specifications
+              </h3>
+              <div className="divide-y divide-line/60">
+                <div className="grid grid-cols-12 py-2.5 text-[13.5px] items-start">
+                  <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">Name</span>
+                  <span className="col-span-8 sm:col-span-9 text-fg font-medium leading-snug">{product.product_name}</span>
+                </div>
+                {product.brand && (
+                  <div className="grid grid-cols-12 py-2.5 text-[13.5px] items-center">
+                    <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">Brand</span>
+                    <span className="col-span-8 sm:col-span-9 text-fg font-medium">{product.brand}</span>
+                  </div>
+                )}
+                {product.categoryName && (
+                  <div className="grid grid-cols-12 py-2.5 text-[13.5px] items-center">
+                    <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">Category</span>
+                    <span className="col-span-8 sm:col-span-9 text-fg font-medium">{product.categoryName}</span>
+                  </div>
+                )}
+                {product.subcategoryName && (
+                  <div className="grid grid-cols-12 py-2.5 text-[13.5px] items-center">
+                    <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">Subcategory</span>
+                    <span className="col-span-8 sm:col-span-9 text-fg font-medium">{product.subcategoryName}</span>
+                  </div>
+                )}
+                {product.childSubcategoryName && (
+                  <div className="grid grid-cols-12 py-2.5 text-[13.5px] items-center">
+                    <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">Type</span>
+                    <span className="col-span-8 sm:col-span-9 text-fg font-medium">{product.childSubcategoryName}</span>
+                  </div>
+                )}
+                {selectedAttribute?.attributes && typeof selectedAttribute.attributes === 'object' && (
+                  Object.entries(selectedAttribute.attributes).map(([k, v]) => (
+                    <div key={k} className="grid grid-cols-12 py-2.5 text-[13.5px] items-center">
+                      <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">{k}</span>
+                      <span className="col-span-8 sm:col-span-9 text-orange font-semibold">{v}</span>
+                    </div>
+                  ))
+                )}
+                {product.sku && (
+                  <div className="grid grid-cols-12 py-2.5 text-[13.5px] items-center">
+                    <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">SKU</span>
+                    <span className="col-span-8 sm:col-span-9 text-fg font-medium">{product.sku}</span>
+                  </div>
+                )}
+                {Array.isArray(product.specifications) && product.specifications.map((spec, sIdx) => (
+                  <div key={sIdx} className="grid grid-cols-12 py-2.5 text-[13.5px] items-center">
+                    <span className="col-span-4 sm:col-span-3 text-fg-muted font-medium">{spec.title || spec.name || spec.key || `Spec ${sIdx + 1}`}</span>
+                    <span className="col-span-8 sm:col-span-9 text-fg font-medium">{spec.value || spec.description || ''}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="xl:sticky xl:top-4 xl:self-start">
             <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
               <div className="p-4">
-                <div className="flex items-baseline gap-2.5 mb-4">
+                <div className="flex items-baseline gap-2.5 mb-3">
                   <span className="font-display text-[30px] font-bold text-fg">{formatPrice(offerPrice)}</span>
                   {originalPrice > offerPrice && (
                     <span className="text-[15px] text-fg-subtle line-through">{formatPrice(originalPrice)}</span>
                   )}
                 </div>
+
+                {/* Right Sticky Variant Selector */}
+                {attributesList.length > 1 && (
+                  <div className="mb-4 pb-3 border-b border-line">
+                    <AttributeSelector
+                      attributes={attributesList}
+                      selectedAttribute={selectedAttribute}
+                      onSelectAttribute={setSelectedAttribute}
+                      formatPrice={formatPrice}
+                      compact={true}
+                    />
+                  </div>
+                )}
 
                 <div className="mb-4">
                   <label className="text-[13px] font-semibold text-fg-muted mb-2 block">Quantity</label>
@@ -1060,12 +1309,12 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => product && handleAddToCart(product, quantity)}
                   className={`w-full flex items-center justify-center gap-2 rounded-lg border py-3 px-3 text-[14px] font-bold transition-all mb-2 shadow-xs ${
-                    product && isInCart(product.id)
+                    product && isInCart(product.id, currentAttrId)
                       ? 'border-emerald-600 bg-emerald-50 text-emerald-700 hover:bg-emerald-100/80'
                       : 'border-navy bg-surface text-navy active:bg-navy active:text-white'
                   }`}
                 >
-                  {product && isInCart(product.id) ? (
+                  {product && isInCart(product.id, currentAttrId) ? (
                     <>
                       <Check className="h-4.5 w-4.5 shrink-0 text-emerald-600" strokeWidth={2.5} />
                       <span className="whitespace-nowrap">Added to Cart</span>
@@ -1079,19 +1328,7 @@ export default function ProductDetailPage() {
                 </button>
 
                 <button
-                  onClick={() => {
-                    if (product) {
-                      const checkoutItem = {
-                        ...product,
-                        quantity: quantity,
-                        selected_quantity: quantity
-                      }
-                      // Store in BOTH sessionStorage and localStorage for persistence across login
-                      sessionStorage.setItem('buyNowItem', JSON.stringify(checkoutItem))
-                      localStorage.setItem('buyNowItem', JSON.stringify(checkoutItem))
-                      router.push('/checkout?buynow=true')
-                    }
-                  }}
+                  onClick={handleBuyNow}
                   className="w-full rounded-lg bg-orange py-3 text-[14px] font-bold text-white active:bg-orange-deep transition-colors shadow"
                 >
                   Buy Now
