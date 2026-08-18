@@ -64,11 +64,11 @@ export function DesktopHome({ data, loading }) {
       <main>
         <CategoryBrowse categories={data?.categories} />
         <Hero banners={data?.webBanners} />
-        <FeaturedCategoryBanners categories={data?.categories} />
         <FlashDeals 
           products={data?.flash_deals} 
           remainingSeconds={data?.flashsale_info?.remaining_seconds} 
         />
+        <FeaturedCategoryBanners categories={data?.categories} />
         <TrendingProducts allData={data} />
         <JeniTravelDeals />
         <BrandStrip brands={data?.brand} />

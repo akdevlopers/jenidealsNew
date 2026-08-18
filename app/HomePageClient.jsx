@@ -164,12 +164,12 @@ export default function HomePageClient({ homeData, loading = false }) {
       <main className="flex-1">
         <CategoryCircles categories={homeData?.categories} />
         <HeroBanner banners={homeData?.mobileBanners} webBanners={homeData?.webBanners} />
-        <PromoCards />
-        <FeaturedCategoryBanners categories={homeData?.categories} />
+        {/* <PromoCards /> */}
         <MFlashDeals
           products={homeData?.flash_deals}
           remainingSeconds={homeData?.flashsale_info?.remaining_seconds}
         />
+        <FeaturedCategoryBanners categories={homeData?.categories} />
         <MBrands brands={homeData?.brand} />
         <JeniTravelDeals />
         <MTrending allData={homeData} />
