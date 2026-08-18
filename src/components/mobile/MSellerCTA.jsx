@@ -18,7 +18,7 @@ export function MSellerCTA() {
             Open your store in minutes and reach 2M+ shoppers. $0 to start.
           </p>
           <a
-            href="https://jenideals.com/vendor/login"
+            href="https://vendor.jenideals.com/vendor/login"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-orange px-5 py-2.5 text-[14px] font-semibold text-white active:bg-orange-deep"

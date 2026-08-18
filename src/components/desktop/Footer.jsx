@@ -32,17 +32,17 @@ const getLinkHref = (label) => {
 
     // Sell links - All redirect to external vendor portal
     case "become a seller":
-      return "https://jenideals.com/vendor/login";
+      return "https://vendor.jenideals.com/vendor/login";
     case "seller central":
-      return "https://jenideals.com/vendor/login";
+      return "https://vendor.jenideals.com/vendor/login";
     case "pricing & fees":
-      return "https://jenideals.com/vendor/login";
+      return "https://vendor.jenideals.com/vendor/login";
     case "seller handbook":
-      return "https://jenideals.com/vendor/login";
+      return "https://vendor.jenideals.com/vendor/login";
     case "fulfilment":
-      return "https://jenideals.com/vendor/login";
+      return "https://vendor.jenideals.com/vendor/login";
     case "success stories":
-      return "https://jenideals.com/vendor/login";
+      return "https://vendor.jenideals.com/vendor/login";
 
     // Support links
     case "help center":

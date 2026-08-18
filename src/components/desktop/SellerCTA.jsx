@@ -27,7 +27,7 @@ export function SellerCTA() {
             </p>
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <a
-                href="https://jenideals.com/vendor/login"
+                href="https://vendor.jenideals.com/vendor/login"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-lg bg-orange px-4 py-2.5 text-[13.5px] font-semibold text-white hover:bg-orange-deep transition-colors"

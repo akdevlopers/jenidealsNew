@@ -56,7 +56,7 @@ export default function AccountPage() {
       icon: Store, 
       label: 'Vendor Login', 
       onClick: () => {
-        window.location.href = 'https://jenideals.com/vendor/login'
+        window.location.href = 'https://vendor.jenideals.com/vendor/login'
       } 
     },
   ]
