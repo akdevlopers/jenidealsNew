@@ -130,6 +130,7 @@ export const getHomepageData = async (countryId = '1') => {
         banners: extractList(data.banners || data.banner),
         banners_web: extractList(data.banners_web || data.banner_web || data.bannersWeb),
         collections: extractList(data.collections || data.collection),
+        featured_collections: extractList(data.featuredCollections || data.featured_collections || []),
         flash_deals: addAttributeIdToProducts(extractList(flashSaleProducts)),
         flashsale_info: {
           remaining_seconds: remainingSeconds,

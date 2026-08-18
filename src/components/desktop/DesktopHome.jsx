@@ -30,7 +30,7 @@ export function DesktopHome({ data, loading }) {
         <main>
         <CategoryBrowse categories={data?.categories} />
         <Hero banners={data?.webBanners} />
-        <FeaturedCategoryBanners categories={data?.categories} />
+        <FeaturedCategoryBanners featuredCollections={data?.featured_collections} categories={data?.categories} />
         <FlashDeals 
           products={data?.flash_deals} 
           remainingSeconds={data?.flashsale_info?.remaining_seconds} 
@@ -68,7 +68,7 @@ export function DesktopHome({ data, loading }) {
           products={data?.flash_deals} 
           remainingSeconds={data?.flashsale_info?.remaining_seconds} 
         />
-        <FeaturedCategoryBanners categories={data?.categories} />
+        <FeaturedCategoryBanners featuredCollections={data?.featured_collections} categories={data?.categories} />
         <TrendingProducts allData={data} />
         <JeniTravelDeals />
         <BrandStrip brands={data?.brand} />

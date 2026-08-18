@@ -169,7 +169,7 @@ export default function HomePageClient({ homeData, loading = false }) {
           products={homeData?.flash_deals}
           remainingSeconds={homeData?.flashsale_info?.remaining_seconds}
         />
-        <FeaturedCategoryBanners categories={homeData?.categories} />
+        <FeaturedCategoryBanners featuredCollections={homeData?.featured_collections} categories={homeData?.categories} />
         <MBrands brands={homeData?.brand} />
         <JeniTravelDeals />
         <MTrending allData={homeData} />

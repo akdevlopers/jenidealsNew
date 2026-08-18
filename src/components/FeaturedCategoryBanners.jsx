@@ -4,7 +4,57 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Sparkles, Zap, Flame } from "lucide-react";
 import { useCountry } from "../context/CountryContext";
 
-export function FeaturedCategoryBanners({ categories: categoriesProp }) {
+// Styling presets for different banner types
+const BANNER_STYLE_PRESETS = [
+  {
+    bgGradient: "from-[#050b1e] via-[#0b1739] to-[#152a5e]",
+    accentColor: "bg-cyan-400/15 text-cyan-300 border-cyan-400/30",
+    btnBg: "bg-gradient-to-r from-orange via-amber-500 to-orange hover:from-orange-deep hover:to-orange shadow-[0_4px_14px_rgba(249,115,22,0.35)]",
+    borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #3b82f6 270deg, #06b6d4 310deg, #ff8c00 360deg)",
+    icon: Zap,
+  },
+  {
+    bgGradient: "from-[#170513] via-[#260a20] to-[#401029]",
+    accentColor: "bg-amber-400/15 text-amber-300 border-amber-400/30",
+    btnBg: "bg-gradient-to-r from-amber-500 via-orange to-rose-600 hover:from-amber-600 hover:to-orange-deep shadow-[0_4px_14px_rgba(245,158,11,0.35)]",
+    borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #f59e0b 270deg, #f43f5e 310deg, #ff8c00 360deg)",
+    icon: Sparkles,
+  },
+  {
+    bgGradient: "from-[#1a0033] via-[#330066] to-[#4d0099]",
+    accentColor: "bg-purple-400/15 text-purple-300 border-purple-400/30",
+    btnBg: "bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 hover:from-purple-600 hover:to-pink-600 shadow-[0_4px_14px_rgba(168,85,247,0.35)]",
+    borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #a855f7 270deg, #ec4899 310deg, #ff8c00 360deg)",
+    icon: Sparkles,
+  },
+  {
+    bgGradient: "from-[#0d2818] via-[#1a4d33] to-[#27734d]",
+    accentColor: "bg-emerald-400/15 text-emerald-300 border-emerald-400/30",
+    btnBg: "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:to-teal-600 shadow-[0_4px_14px_rgba(16,185,129,0.35)]",
+    borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #10b981 270deg, #14b8a6 310deg, #ff8c00 360deg)",
+    icon: Zap,
+  },
+];
+
+// Generate route based on collection type
+const generateRoute = (collection) => {
+  if (!collection) return "/categories";
+  
+  const { type, categoryId, subcategoryId, childSubcategoryId } = collection;
+  
+  switch (type) {
+    case "categoryPage":
+      return `/categories/${categoryId}`;
+    case "categoryProductPage":
+      return `/products?category=${categoryId}`;
+    case "childCategoryProductPage":
+      return `/products?category=${categoryId}&subcategory=${subcategoryId}&childcategoryid=${childSubcategoryId}`;
+    default:
+      return `/categories/${categoryId}`;
+  }
+};
+
+export function FeaturedCategoryBanners({ featuredCollections = [], categories: categoriesProp }) {
   const router = useRouter();
   const { country, categories: contextCategories } = useCountry();
 
@@ -14,66 +64,83 @@ export function FeaturedCategoryBanners({ categories: categoriesProp }) {
     return null;
   }
 
-  const sourceCategories = (contextCategories && contextCategories.length > 0)
-    ? contextCategories
-    : (categoriesProp && categoriesProp.length > 0 ? categoriesProp : []);
+  // Use API featured collections if available, otherwise fall back to finding categories
+  let featuredBanners = [];
 
-  // Find Electronics category from API data if available
-  const electronicsCat = sourceCategories.find(c => {
-    if (!c) return false;
-    const name = (c.name || c.category_name || "").toLowerCase();
-    return name.includes("electronic") || name.includes("gadget");
-  });
+  if (featuredCollections && Array.isArray(featuredCollections) && featuredCollections.length > 0) {
+    // Map API featured collections to banner format
+    featuredBanners = featuredCollections.slice(0, 2).map((collection, index) => {
+      const stylePreset = BANNER_STYLE_PRESETS[index % BANNER_STYLE_PRESETS.length];
+      const BadgeIcon = stylePreset.icon;
+      
+      return {
+        id: `featured-${index}`,
+        title: collection.title || "Featured",
+        subtitle: collection.description || "Explore our collection",
+        badge: collection.badge || "Trending",
+        icon: BadgeIcon,
+        image_url: collection.image_url,
+        bgGradient: stylePreset.bgGradient,
+        accentColor: stylePreset.accentColor,
+        btnBg: stylePreset.btnBg,
+        borderConic: stylePreset.borderConic,
+        defaultImage: collection.image_url || "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500&h=500&fit=crop&q=80",
+        route: generateRoute(collection),
+      };
+    });
+  } else {
+    // Fallback: find categories dynamically
+    const sourceCategories = (contextCategories && contextCategories.length > 0)
+      ? contextCategories
+      : (categoriesProp && categoriesProp.length > 0 ? categoriesProp : []);
 
-  // Find Perfumes category from API data if available
-  const perfumesCat = sourceCategories.find(c => {
-    if (!c) return false;
-    const name = (c.name || c.category_name || "").toLowerCase();
-    return name.includes("perfume") || name.includes("fragrance") || name.includes("beauty");
-  });
+    const electronicsCat = sourceCategories.find(c => {
+      if (!c) return false;
+      const name = (c.name || c.category_name || "").toLowerCase();
+      return name.includes("electronic") || name.includes("gadget");
+    });
 
-  const featuredBanners = [
-    {
-      id: "electronics",
-      title: electronicsCat?.name || electronicsCat?.category_name || "Electronics",
-      subtitle: "Smartphones, Laptops & Tech",
-      badge: "Popular Tech",
-      icon: Zap,
-      categoryObj: electronicsCat,
-      bgGradient: "from-[#050b1e] via-[#0b1739] to-[#152a5e]",
-      accentColor: "bg-cyan-400/15 text-cyan-300 border-cyan-400/30",
-      btnBg: "bg-gradient-to-r from-orange via-amber-500 to-orange hover:from-orange-deep hover:to-orange shadow-[0_4px_14px_rgba(249,115,22,0.35)]",
-      borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #3b82f6 270deg, #06b6d4 310deg, #ff8c00 360deg)",
-      defaultImage: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500&h=500&fit=crop&q=80",
-      fallbackRoute: electronicsCat?.id ? `/categories?category=${electronicsCat.id}` : "/categories"
-    },
-    {
-      id: "perfumes",
-      title: perfumesCat?.name || perfumesCat?.category_name || "Perfumes",
-      subtitle: "Luxury Fragrances & Oud",
-      badge: "Best Sellers",
-      icon: Sparkles,
-      categoryObj: perfumesCat,
-      bgGradient: "from-[#170513] via-[#260a20] to-[#401029]",
-      accentColor: "bg-amber-400/15 text-amber-300 border-amber-400/30",
-      btnBg: "bg-gradient-to-r from-amber-500 via-orange to-rose-600 hover:from-amber-600 hover:to-orange-deep shadow-[0_4px_14px_rgba(245,158,11,0.35)]",
-      borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #f59e0b 270deg, #f43f5e 310deg, #ff8c00 360deg)",
-      defaultImage: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=500&h=500&fit=crop&q=80",
-      fallbackRoute: perfumesCat?.id ? `/categories?category=${perfumesCat.id}` : "/categories"
-    }
-  ];
+    const perfumesCat = sourceCategories.find(c => {
+      if (!c) return false;
+      const name = (c.name || c.category_name || "").toLowerCase();
+      return name.includes("perfume") || name.includes("fragrance") || name.includes("beauty");
+    });
+
+    featuredBanners = [
+      {
+        id: "electronics",
+        title: electronicsCat?.name || electronicsCat?.category_name || "Electronics",
+        subtitle: "Smartphones, Laptops & Tech",
+        badge: "Popular Tech",
+        icon: Zap,
+        categoryObj: electronicsCat,
+        bgGradient: "from-[#050b1e] via-[#0b1739] to-[#152a5e]",
+        accentColor: "bg-cyan-400/15 text-cyan-300 border-cyan-400/30",
+        btnBg: "bg-gradient-to-r from-orange via-amber-500 to-orange hover:from-orange-deep hover:to-orange shadow-[0_4px_14px_rgba(249,115,22,0.35)]",
+        borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #3b82f6 270deg, #06b6d4 310deg, #ff8c00 360deg)",
+        defaultImage: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=500&h=500&fit=crop&q=80",
+        route: electronicsCat?.id ? `/categories?category=${electronicsCat.id}` : "/categories"
+      },
+      {
+        id: "perfumes",
+        title: perfumesCat?.name || perfumesCat?.category_name || "Perfumes",
+        subtitle: "Luxury Fragrances & Oud",
+        badge: "Best Sellers",
+        icon: Sparkles,
+        categoryObj: perfumesCat,
+        bgGradient: "from-[#170513] via-[#260a20] to-[#401029]",
+        accentColor: "bg-amber-400/15 text-amber-300 border-amber-400/30",
+        btnBg: "bg-gradient-to-r from-amber-500 via-orange to-rose-600 hover:from-amber-600 hover:to-orange-deep shadow-[0_4px_14px_rgba(245,158,11,0.35)]",
+        borderConic: "conic-gradient(from 0deg, transparent 0deg, transparent 220deg, #f59e0b 270deg, #f43f5e 310deg, #ff8c00 360deg)",
+        defaultImage: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=500&h=500&fit=crop&q=80",
+        route: perfumesCat?.id ? `/categories?category=${perfumesCat.id}` : "/categories"
+      }
+    ];
+  }
 
   const handleCategoryClick = (item) => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    if (item.categoryObj && item.categoryObj.id) {
-      if (isMobile) {
-        router.push(`/categories?category=${item.categoryObj.id}`);
-      } else {
-        router.push(`/categories/${item.categoryObj.id}`);
-      }
-    } else {
-      router.push(item.fallbackRoute);
-    }
+    // Use the route from the item (either from API or fallback)
+    router.push(item.route || item.fallbackRoute || "/categories");
   };
 
   return (
@@ -92,7 +159,8 @@ export function FeaturedCategoryBanners({ categories: categoriesProp }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {featuredBanners.map((item) => {
           const BadgeIcon = item.icon;
-          const catImage = item.categoryObj?.icon_url ||
+          const catImage = item.image_url ||
+            item.categoryObj?.icon_url ||
             item.categoryObj?.image_url ||
             item.categoryObj?.category_image ||
             item.categoryObj?.icon_image ||
