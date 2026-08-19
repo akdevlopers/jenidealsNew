@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Star, Heart, Package } from "lucide-react";
 import { useCountry } from "../../context/CountryContext";
 import { useWishlist } from "../../context/WishlistContext";
+import { formatDiscountLabel } from "../../utils/formatters";
 
 export function MProductCard({ product, width }) {
   const [imgOk, setImgOk] = useState(true)
@@ -23,22 +24,18 @@ export function MProductCard({ product, width }) {
   const reviews = product.reviews || 0;
   const isLiked = isInWishlist(product.id);
 
-  // Category Badge (Bestseller, Deal, Featured, etc.)
-  let badgeText = "";
-  let badgeBgClass = "bg-[#0F172A]"; // Default Bestseller slate
-
-  if (product.badge_text) {
-    badgeText = product.badge_text;
-    badgeBgClass = product.badge_bg || "bg-[#0F172A]";
-  } else if (product.is_bestseller || product.isBestseller || product.best_seller || (product.id % 2 === 0)) {
-    badgeText = "Bestseller";
-    badgeBgClass = "bg-[#0F172A]"; // Dark navy/slate pill
-  } else if (product.is_deal || product.deal || off > 0) {
-    badgeText = "Deal";
-    badgeBgClass = "bg-[#EF4444]"; // Red deal pill
-  } else if (product.is_featured || product.featured) {
-    badgeText = "Featured";
-    badgeBgClass = "bg-navy";
+  // Custom discount text matching Desktop ProductCard
+  let discountBadgeText = "";
+  if (product.discount_type === "percentage" && product.discount_value) {
+    discountBadgeText = formatDiscountLabel(`${Math.round(parseFloat(product.discount_value))}%`);
+  } else if (product.discount_type === "flat" && product.discount_value) {
+    discountBadgeText = formatDiscountLabel(formatPrice(product.discount_value));
+  } else if (product.discount_percentage) {
+    discountBadgeText = formatDiscountLabel(`${product.discount_percentage}%`);
+  } else if (product.discount_text) {
+    discountBadgeText = formatDiscountLabel(product.discount_text);
+  } else if (off > 0) {
+    discountBadgeText = formatDiscountLabel(`${off}%`);
   }
 
   const handleCardClick = () => {
@@ -57,12 +54,16 @@ export function MProductCard({ product, width }) {
     >
       {/* Top Image Box */}
       <div className="relative aspect-square w-full flex items-center justify-center mb-1">
-        {/* Top-Left Category Badge */}
-        {badgeText && (
-          <span className={`absolute left-2 top-2 z-10 rounded-full ${badgeBgClass} px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs`}>
-            {badgeText}
+        {/* Top-Left Discount Badge */}
+        {discountBadgeText ? (
+          <span className="absolute left-2 top-2 z-10 rounded bg-sale px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+            {discountBadgeText}
           </span>
-        )}
+        ) : product.badge_text ? (
+          <span className={`absolute left-2 top-2 z-10 rounded-full ${product.badge_bg || "bg-[#0F172A]"} px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs`}>
+            {product.badge_text}
+          </span>
+        ) : null}
 
         {/* Top-Right Wishlist Heart Button */}
         <button
@@ -109,8 +110,8 @@ export function MProductCard({ product, width }) {
           </div>
         </div>
 
-        {/* Price & Discount */}
-        <div className="mt-2.5">
+        {/* Price */}
+        <div className="mt-2">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="text-sm sm:text-base font-extrabold text-[#0F172A]">
               {formatPrice(offerPrice)}
@@ -121,15 +122,6 @@ export function MProductCard({ product, width }) {
               </span>
             )}
           </div>
-
-          {/* Discount Tag */}
-          {off > 0 && (
-            <div className="mt-1">
-              <span className="inline-block bg-red-50 text-red-500 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                -{off}%
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </div>
