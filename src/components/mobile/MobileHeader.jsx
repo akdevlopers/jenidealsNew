@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Menu, ChevronDown, Search, Bell, MapPin, X, ChevronLeft } from "lucide-react";
+import { Menu, ChevronDown, Search, Bell, X, ChevronLeft } from "lucide-react";
 import { useCountry, flagUrl } from "../../context/CountryContext";
 import { useState, useEffect, useRef } from "react";
 import { CountrySheet } from "./CountrySheet";
@@ -175,9 +175,6 @@ export function MobileHeader({ onOpenMenu, showSearch = true, showBack = false, 
                   className="h-3 w-5 object-cover ring-2 ring-white/30 shadow-sm"
                 />
               )}
-              <span className="absolute -bottom-1.5 -right-1.5 grid h-4 w-4 place-items-center rounded-full bg-navy ring-2 ring-navy">
-                <MapPin className="h-2.5 w-2.5 text-orange" strokeWidth={2.5} />
-              </span>
             </div>
             
             <div className="flex flex-col">

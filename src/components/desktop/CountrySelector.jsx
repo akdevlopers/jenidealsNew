@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Check, MapPin, ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { countries, flagUrl, useCountry } from "../../context/CountryContext";
 
 export function CountrySelector() {
@@ -64,12 +64,7 @@ export function CountrySelector() {
                   className={`flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-surface-2 transition-colors ${selected ? "bg-orange-tint" : ""}`}
                 >
                   <img src={flagUrl(c.code)} alt={c.name} className="h-3.5 w-5 shrink-0 object-cover ring-1 ring-line shadow-xs" />
-                  <span className="flex-1">
-                    <span className="block text-[13px] font-semibold text-navy">{c.name}</span>
-                    <span className="flex items-center gap-1 text-[11px] text-fg-muted">
-                      <MapPin className="h-3 w-3" strokeWidth={2} /> {c.city}
-                    </span>
-                  </span>
+                  <span className="flex-1 text-[13px] font-semibold text-navy">{c.name}</span>
                   {selected && (
                     <span className="grid h-4 w-4 place-items-center rounded-full bg-orange">
                       <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />

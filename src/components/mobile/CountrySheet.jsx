@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Check, MapPin } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { countries, flagUrl, useCountry } from "../../context/CountryContext";
 
 export function CountrySheet({ open, onClose }) {
