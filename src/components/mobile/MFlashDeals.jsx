@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Zap, ChevronRight } from "lucide-react";
+import { Zap } from "lucide-react";
 import { MProductCard } from "./MProductCard";
 
 function pad(n) {
@@ -17,7 +17,7 @@ export function MFlashDeals({ products = [], remainingSeconds }) {
     if (remainingSeconds !== undefined && remainingSeconds !== null) {
       setLeft(Number(remainingSeconds));
     } else {
-      setLeft(7 * 3600 + 42 * 60 + 15);
+      setLeft(26 * 3600 + 37 * 60 + 5);
     }
   }, [remainingSeconds]);
 
@@ -34,33 +34,70 @@ export function MFlashDeals({ products = [], remainingSeconds }) {
   const m = Math.floor((left % 3600) / 60);
   const s = left % 60;
 
-  // Get category and subcategory from first product for "All" link
-  const firstProduct = products[0];
-
   return (
-    <section className="mt-3 bg-navy py-4">
-      <div className="flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-orange">
-            <Zap className="h-4 w-4 fill-white text-white" strokeWidth={0} />
-          </span>
-          <h2 className="font-display text-lg font-bold tracking-tight text-white">Flash Deals</h2>
-          <div className="ml-1 flex items-center gap-1">
-            {[h, m, s].map((v, idx) => (
-              <div key={idx} className="flex items-center gap-1">
-                <span className="grid min-w-[26px] place-items-center rounded bg-white/10 px-1 py-0.5 text-[12px] font-bold tabular-nums text-white ring-1 ring-white/15">
-                  {pad(v)}
-                </span>
-                {idx < 2 && <span className="text-[12px] font-bold text-orange-ring">:</span>}
-              </div>
-            ))}
+    <section className="mt-3 bg-navy py-3.5">
+      <div className="flex items-center justify-between px-3.5 sm:px-4">
+        {/* Left Section: Icon + Title & Timer */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Orange Icon */}
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-orange shadow-xs">
+            <Zap className="h-4.5 w-4.5 fill-white text-white" strokeWidth={0} />
+          </div>
+
+          {/* Title & "ENDS IN:" */}
+          <div className="flex flex-col justify-center shrink-0">
+            <h2 className="text-[14px] sm:text-[15px] font-bold text-white leading-tight">
+              Flash Sale
+            </h2>
+            <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase leading-none mt-1">
+              ENDS IN:
+            </span>
+          </div>
+
+          {/* Timer Display */}
+          <div className="flex items-center gap-1 sm:gap-1.5 ml-1">
+            {/* HRS */}
+            <div className="flex min-w-[34px] sm:min-w-[38px] flex-col items-center justify-center rounded-md bg-white px-1.5 py-1 shadow-sm ring-1 ring-black/5">
+              <span className="text-[14px] sm:text-[15px] font-black leading-none tabular-nums text-[#FF4500]">
+                {pad(h)}
+              </span>
+              <span className="text-[8.5px] sm:text-[9px] font-black tracking-wider uppercase text-slate-900 leading-none mt-0.5">
+                HRS
+              </span>
+            </div>
+
+            <span className="text-white font-black text-xs select-none">:</span>
+
+            {/* MIN */}
+            <div className="flex min-w-[34px] sm:min-w-[38px] flex-col items-center justify-center rounded-md bg-white px-1.5 py-1 shadow-sm ring-1 ring-black/5">
+              <span className="text-[14px] sm:text-[15px] font-black leading-none tabular-nums text-[#FF4500]">
+                {pad(m)}
+              </span>
+              <span className="text-[8.5px] sm:text-[9px] font-black tracking-wider uppercase text-slate-900 leading-none mt-0.5">
+                MIN
+              </span>
+            </div>
+
+            <span className="text-white font-black text-xs select-none">:</span>
+
+            {/* SEC */}
+            <div className="flex min-w-[34px] sm:min-w-[38px] flex-col items-center justify-center rounded-md bg-white px-1.5 py-1 shadow-sm ring-1 ring-black/5">
+              <span className="text-[14px] sm:text-[15px] font-black leading-none tabular-nums text-[#FF4500]">
+                {pad(s)}
+              </span>
+              <span className="text-[8.5px] sm:text-[9px] font-black tracking-wider uppercase text-slate-900 leading-none mt-0.5">
+                SEC
+              </span>
+            </div>
           </div>
         </div>
+
+        {/* Right Section: See all */}
         <button 
           onClick={() => router.push('/flash-deals')}
-          className="flex items-center text-[12px] font-semibold text-orange-ring active:opacity-70"
+          className="text-[13px] sm:text-[14px] font-semibold text-orange hover:underline active:opacity-75 transition-opacity shrink-0 ml-2"
         >
-          All <ChevronRight className="h-4 w-4" strokeWidth={2.25} />
+          See all
         </button>
       </div>
 
