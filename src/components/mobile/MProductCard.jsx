@@ -52,31 +52,31 @@ export function MProductCard({ product, width }) {
       onClick={handleCardClick}
       className={`flex flex-col overflow-hidden rounded-2xl border border-line/60 bg-white p-3 shadow-xs active:scale-[0.98] transition-transform cursor-pointer relative ${width ?? ""}`}
     >
+      {/* Top-Left Discount Badge */}
+      {discountBadgeText ? (
+        <span className="absolute left-2.5 top-2.5 z-10 rounded-full bg-sale px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
+          {discountBadgeText}
+        </span>
+      ) : product.badge_text ? (
+        <span className={`absolute left-2.5 top-2.5 z-10 rounded-full ${product.badge_bg || "bg-[#0F172A]"} px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs`}>
+          {product.badge_text}
+        </span>
+      ) : null}
+
+      {/* Top-Right Wishlist Heart Button */}
+      <button
+        type="button"
+        onClick={handleToggleWishlist}
+        className="absolute right-2.5 top-2.5 z-10 grid h-7 w-7 place-items-center rounded-full bg-white shadow-md active:scale-110 transition-transform"
+      >
+        <Heart
+          className={`h-3.5 w-3.5 ${isLiked ? 'fill-sale text-sale' : 'text-gray-400'}`}
+          strokeWidth={1.75}
+        />
+      </button>
+
       {/* Top Image Box */}
       <div className="relative aspect-square w-full flex items-center justify-center mb-1">
-        {/* Top-Left Discount Badge */}
-        {discountBadgeText ? (
-          <span className="absolute left-2 top-2 z-10 rounded bg-sale px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
-            {discountBadgeText}
-          </span>
-        ) : product.badge_text ? (
-          <span className={`absolute left-2 top-2 z-10 rounded-full ${product.badge_bg || "bg-[#0F172A]"} px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs`}>
-            {product.badge_text}
-          </span>
-        ) : null}
-
-        {/* Top-Right Wishlist Heart Button */}
-        <button
-          type="button"
-          onClick={handleToggleWishlist}
-          className="absolute right-2 top-2 z-10 grid h-8 w-8 place-items-center rounded-full bg-white shadow-md active:scale-110 transition-transform"
-        >
-          <Heart
-            className={`h-4 w-4 ${isLiked ? 'fill-sale text-sale' : 'text-gray-400'}`}
-            strokeWidth={1.75}
-          />
-        </button>
-
         {/* Product Image or Fallback Icon */}
         {imgOk && product.product_img_url ? (
           <Image
