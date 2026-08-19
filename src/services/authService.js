@@ -1,10 +1,10 @@
 const isServer = typeof window === 'undefined';
 const PROXY_BASE_URL = process.env.NEXT_PUBLIC_PROXY_BASE_URL || '/api/v5';
 
-const API_BASE_URL = !isServer 
-  ? PROXY_BASE_URL 
-  : (process.env.NEXT_PUBLIC_API_BASE === 'cloud' 
-    ? process.env.NEXT_PUBLIC_CLOUD_BASE_URL 
+const API_BASE_URL = !isServer
+  ? PROXY_BASE_URL
+  : (process.env.NEXT_PUBLIC_API_BASE === 'cloud'
+    ? process.env.NEXT_PUBLIC_CLOUD_BASE_URL
     : process.env.NEXT_PUBLIC_LOCAL_BASE_URL);
 
 export const authService = {
@@ -21,7 +21,7 @@ export const authService = {
     })
 
     const data = await response.json()
-    
+
     if (data?.status) {
       // Store token if login successful and no OTP required
       if (data.otpPage === 0 && data.data?.token) {
@@ -34,7 +34,7 @@ export const authService = {
         }
       }
     }
-    
+
     return data
   },
 
@@ -60,23 +60,28 @@ export const authService = {
   // Verify OTP API - Modified to handle forgot password without user_id
   async verifyOTP(userId, mobileOtp, emailOtp, phoneOrEmail = null, country = null) {
     const formData = new FormData()
-    
+
     // If userId is undefined and we have phoneOrEmail, use that instead
     if (userId === 'undefined' || !userId) {
       if (phoneOrEmail) {
         formData.append('phone_or_email', phoneOrEmail)
+        formData.append('phoneOrEmail', phoneOrEmail)
       }
     } else {
       formData.append('user_id', userId)
+      formData.append('userId', userId)
     }
-    
+
     // Always append both OTP fields
-    formData.append('mobileOtp', mobileOtp)
-    formData.append('emailOtp', emailOtp)
+    formData.append('mobileOtp', mobileOtp || '')
+    formData.append('mobile_otp', mobileOtp || '')
+    formData.append('emailOtp', emailOtp || '')
+    formData.append('email_otp', emailOtp || '')
     // Always append countryId payload
     const countryIdVal = country || (typeof window !== 'undefined' ? (localStorage.getItem('selectedCountryId') || JSON.parse(localStorage.getItem('user') || '{}').country) : null)
     if (countryIdVal) {
       formData.append('countryId', countryIdVal)
+      formData.append('country', countryIdVal)
     }
 
     const response = await fetch(`${API_BASE_URL}/verify_otp`, {
@@ -85,33 +90,33 @@ export const authService = {
     })
 
     const data = await response.json()
-    
+
     if (data.status && data.data && data.data.token) {
       localStorage.setItem('authToken', data.data.token)
-      
+
       const existingUserStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null
       let existingUser = {}
       try {
         existingUser = existingUserStr ? JSON.parse(existingUserStr) : {}
-      } catch (e) {}
+      } catch (e) { }
 
       const userToSave = {
         ...existingUser,
         ...(data.data.user || {}),
         id: (data.data.user && data.data.user.id) ? data.data.user.id : (userId || existingUser.id),
-        country: (data.data.user && data.data.user.country) ? data.data.user.country : (country || existingUser.country)
+        country: (data.data.user && data.data.user.country) ? data.data.user.country : (countryIdVal || existingUser.country)
       }
-      
+
       localStorage.setItem('user', JSON.stringify(userToSave))
     }
-    
+
     return data
   },
 
   // Single OTP Verification API (/verify_otp_new)
   async verifyOTPNew(userId, otp, otpType, phoneOrEmail = null, country = null) {
     const formData = new FormData()
-    
+
     if (userId === 'undefined' || !userId) {
       if (phoneOrEmail) {
         formData.append('phone_or_email', phoneOrEmail)
@@ -119,7 +124,7 @@ export const authService = {
     } else {
       formData.append('user_id', userId)
     }
-    
+
     formData.append('otp', otp)
     formData.append('type', otpType) // 'mobile' or 'email'
 
@@ -134,15 +139,15 @@ export const authService = {
     })
 
     const data = await response.json()
-    
+
     if (data.status && data.data && data.data.token) {
       localStorage.setItem('authToken', data.data.token)
-      
+
       const existingUserStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null
       let existingUser = {}
       try {
         existingUser = existingUserStr ? JSON.parse(existingUserStr) : {}
-      } catch (e) {}
+      } catch (e) { }
 
       const userToSave = {
         ...existingUser,
@@ -150,10 +155,10 @@ export const authService = {
         id: (data.data.user && data.data.user.id) ? data.data.user.id : (userId || existingUser.id),
         country: (data.data.user && data.data.user.country) ? data.data.user.country : (countryIdVal || existingUser.country)
       }
-      
+
       localStorage.setItem('user', JSON.stringify(userToSave))
     }
-    
+
     return data
   },
 
@@ -264,13 +269,13 @@ export const authService = {
       }
 
       const data = await response.json()
-      
+
       // Update stored user data if successful
       if (data.status && data.Data) {
         const currentUser = this.getUserData()
         if (currentUser) {
-          const updatedUser = { 
-            ...currentUser, 
+          const updatedUser = {
+            ...currentUser,
             name: data.Data.name || name,
             email: data.Data.email || email,
             phone: data.Data.phone || phone
@@ -278,7 +283,7 @@ export const authService = {
           localStorage.setItem('user', JSON.stringify(updatedUser))
         }
       }
-      
+
       return data
     } catch (error) {
       return {
@@ -306,7 +311,7 @@ export const authService = {
   // Get Wallet History API
   async getWalletHistory(userId) {
     if (!userId) return { status: false, Data: [] }
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/walletHistory`, {
         method: 'POST',

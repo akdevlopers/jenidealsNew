@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ShieldCheck, ArrowRight, RefreshCw, Lock, Eye, EyeOff } from 'lucide-react'
 import { Header } from '../../../src/components/desktop/Header'
-import { Footer} from '../../../src/components/desktop/Footer'
+import { Footer } from '../../../src/components/desktop/Footer'
 import { MobileHeader } from '../../../src/components/mobile/MobileHeader'
 import { BottomNav } from '../../../src/components/mobile/BottomNav'
 import { MenuDrawer } from '../../../src/components/mobile/MenuDrawer'
@@ -19,7 +19,7 @@ function MobileOTPPage() {
   const [otpVerified, setOtpVerified] = useState(false) // New state for OTP verification status
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   const userId = searchParams.get('userId')
   const type = searchParams.get('type') // 'login', 'register', or 'forgot-password'
   const rawPhone = searchParams.get('phone')
@@ -64,13 +64,13 @@ function MobileOTPPage() {
   // OTP inputs (4 digits for mobile, 4 digits for email)
   const [mobileOTP, setMobileOTP] = useState(['', '', '', ''])
   const [emailOTP, setEmailOTP] = useState(['', '', '', ''])
-  
+
   // Password fields for forgot-password flow
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  
+
   const mobileInputRefs = useRef([])
   const emailInputRefs = useRef([])
 
@@ -81,14 +81,14 @@ function MobileOTPPage() {
 
   const handleOTPChange = (index, value, type) => {
     if (!/^\d*$/.test(value)) return // Only numbers
-    
+
     const otpArray = type === 'mobile' ? [...mobileOTP] : [...emailOTP]
     const setOTP = type === 'mobile' ? setMobileOTP : setEmailOTP
     const refs = type === 'mobile' ? mobileInputRefs : emailInputRefs
-    
+
     otpArray[index] = value.slice(-1) // Only last character
     setOTP(otpArray)
-    
+
     // Auto-focus next input
     if (value && index < 3) {
       refs.current[index + 1]?.focus()
@@ -97,7 +97,7 @@ function MobileOTPPage() {
 
   const handleKeyDown = (e, index, type) => {
     const refs = type === 'mobile' ? mobileInputRefs : emailInputRefs
-    
+
     if (e.key === 'Backspace' && !e.target.value && index > 0) {
       refs.current[index - 1]?.focus()
     }
@@ -106,7 +106,7 @@ function MobileOTPPage() {
   const handlePaste = (e, type) => {
     e.preventDefault()
     const pastedData = e.clipboardData.getData('text').slice(0, 4).split('')
-    
+
     if (pastedData.every(char => /^\d$/.test(char))) {
       if (type === 'mobile') {
         setMobileOTP([...pastedData, ...new Array(4 - pastedData.length).fill('')])
@@ -120,10 +120,10 @@ function MobileOTPPage() {
     e.preventDefault()
     setError('')
     setSuccess('')
-    
+
     const mobileOTPString = mobileOTP.join('')
     const emailOTPString = emailOTP.join('')
-    
+
     const isDubai = String(countryParam) === '2'
 
     if (type === 'forgot-password' && otpVerified) {
@@ -140,26 +140,73 @@ function MobileOTPPage() {
         return
       }
     } else {
-      // Validation: validate OTP based on which field is visible
-      if (showMobile && !showEmail) {
-        if (mobileOTPString.length !== 4) {
-          setError('Please enter complete mobile OTP')
-          return
-        }
-      } else if (showEmail && !showMobile) {
-        if (emailOTPString.length !== 4) {
-          setError('Please enter complete email OTP')
-          return
-        }
-      } else {
-        if (isDubai) {
+      // Validation: validate OTP based on which flow and visible/required field
+      if (type === 'register') {
+        if (showMobile && !showEmail) {
+          if (mobileOTPString.length !== 4) {
+            setError('Please enter complete mobile OTP')
+            return
+          }
+        } else if (showEmail && !showMobile) {
           if (emailOTPString.length !== 4) {
             setError('Please enter complete email OTP')
             return
           }
         } else {
+          if (isDubai) {
+            if (emailOTPString.length !== 4) {
+              setError('Please enter complete email OTP')
+              return
+            }
+            if (mobileOTPString.length > 0 && mobileOTPString.length !== 4) {
+              setError('Please enter complete 4-digit mobile OTP or leave it blank')
+              return
+            }
+          } else {
+            if (mobileOTPString.length !== 4) {
+              setError('Please enter complete mobile OTP')
+              return
+            }
+            if (emailOTPString.length > 0 && emailOTPString.length !== 4) {
+              setError('Please enter complete 4-digit email OTP or leave it blank')
+              return
+            }
+          }
+        }
+      } else if (type === 'login') {
+        if (showMobile && !showEmail) {
           if (mobileOTPString.length !== 4) {
             setError('Please enter complete mobile OTP')
+            return
+          }
+        } else if (showEmail && !showMobile) {
+          if (emailOTPString.length !== 4) {
+            setError('Please enter complete email OTP')
+            return
+          }
+        } else {
+          if (loginTypeParam === 'email' || (isDubai && emailOTPString.length === 4)) {
+            if (emailOTPString.length !== 4) {
+              setError('Please enter complete email OTP')
+              return
+            }
+          } else {
+            if (mobileOTPString.length !== 4) {
+              setError('Please enter complete mobile OTP')
+              return
+            }
+          }
+        }
+      } else {
+        // forgot-password
+        if (forgotTypeParam === 'phone') {
+          if (mobileOTPString.length !== 4) {
+            setError('Please enter complete mobile OTP')
+            return
+          }
+        } else {
+          if (emailOTPString.length !== 4) {
+            setError('Please enter complete email OTP')
             return
           }
         }
@@ -170,7 +217,7 @@ function MobileOTPPage() {
 
     try {
       let response
-      
+
       if (type === 'forgot-password') {
         if (!otpVerified) {
           const otp = forgotTypeParam === 'phone' ? mobileOTPString : emailOTPString
@@ -189,51 +236,43 @@ function MobileOTPPage() {
         } else {
           response = await authService.resetPassword(phone || email, newPassword)
         }
+      } else if (type === 'register') {
+        // Registration flow: ALWAYS use verify_otp endpoint (/verify_otp)
+        response = await authService.verifyOTP(
+          userId,
+          mobileOTPString,
+          emailOTPString,
+          phone || email,
+          countryParam
+        )
       } else {
-        // Regular OTP verification for register/login
+        // Login flow: ALWAYS use verify_otp_new endpoint (/verify_otp_new)
+        let otp = ''
+        let otpType = 'mobile'
+
         if (showMobile && !showEmail) {
-          response = await authService.verifyOTPNew(
-            userId,
-            mobileOTPString,
-            'mobile',
-            phone || email,
-            countryParam
-          )
+          otp = mobileOTPString
+          otpType = 'mobile'
         } else if (showEmail && !showMobile) {
-          response = await authService.verifyOTPNew(
-            userId,
-            emailOTPString,
-            'email',
-            phone || email,
-            countryParam
-          )
+          otp = emailOTPString
+          otpType = 'email'
         } else {
-          if (mobileOTPString.length === 4 && emailOTPString.length !== 4) {
-            response = await authService.verifyOTPNew(
-              userId,
-              mobileOTPString,
-              'mobile',
-              phone || email,
-              countryParam
-            )
-          } else if (emailOTPString.length === 4 && mobileOTPString.length !== 4) {
-            response = await authService.verifyOTPNew(
-              userId,
-              emailOTPString,
-              'email',
-              phone || email,
-              countryParam
-            )
+          if (loginTypeParam === 'email' || (isDubai && emailOTPString.length === 4)) {
+            otp = emailOTPString
+            otpType = 'email'
           } else {
-            response = await authService.verifyOTP(
-              userId,
-              mobileOTPString,
-              emailOTPString,
-              phone || email,
-              countryParam
-            )
+            otp = mobileOTPString
+            otpType = 'mobile'
           }
         }
+
+        response = await authService.verifyOTPNew(
+          userId,
+          otp,
+          otpType,
+          phone || email,
+          countryParam
+        )
       }
 
       if (response.status) {
@@ -244,9 +283,18 @@ function MobileOTPPage() {
               window.location.href = '/user/login'
             }, 1500)
           }
+        } else if (type === 'login') {
+          const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('returnUrl') : null
+          const targetUrl = returnUrl || '/user/dashboard'
+          if (returnUrl) sessionStorage.removeItem('returnUrl')
+
+          setSuccess('Login successful! Redirecting...')
+          setTimeout(() => {
+            window.location.href = targetUrl
+          }, 1500)
         } else {
+          // Register
           setSuccess('Verification successful! Redirecting to login...')
-          
           setTimeout(() => {
             window.location.href = '/user/login'
           }, 1500)
@@ -308,14 +356,14 @@ function MobileOTPPage() {
             {type === 'forgot-password' ? (otpVerified ? 'Set New Password' : 'Verify OTP') : 'Verify OTP'}
           </h1>
           <p className="text-xs font-semibold text-gray-400 mt-0.5">
-            {type === 'forgot-password' 
+            {type === 'forgot-password'
               ? (otpVerified ? 'Create your new password to continue' : 'Enter the OTP sent to continue')
               : (showMobile && showEmail
-                  ? 'Enter codes sent to your phone and email'
-                  : showMobile
-                    ? 'Enter code sent to your phone'
-                    : 'Enter code sent to your email'
-                )
+                ? 'Enter codes sent to your phone and email'
+                : showMobile
+                  ? 'Enter code sent to your phone'
+                  : 'Enter code sent to your email'
+              )
             }
           </p>
         </div>
@@ -442,7 +490,7 @@ function DesktopOTPPage() {
   const [otpVerified, setOtpVerified] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   const userId = searchParams.get('userId')
   const type = searchParams.get('type')
   const rawPhone = searchParams.get('phone')
@@ -486,12 +534,12 @@ function DesktopOTPPage() {
 
   const [mobileOTP, setMobileOTP] = useState(['', '', '', ''])
   const [emailOTP, setEmailOTP] = useState(['', '', '', ''])
-  
+
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  
+
   const mobileInputRefs = useRef([])
   const emailInputRefs = useRef([])
 
@@ -502,14 +550,14 @@ function DesktopOTPPage() {
 
   const handleOTPChange = (index, value, type) => {
     if (!/^\d*$/.test(value)) return
-    
+
     const otpArray = type === 'mobile' ? [...mobileOTP] : [...emailOTP]
     const setOTP = type === 'mobile' ? setMobileOTP : setEmailOTP
     const refs = type === 'mobile' ? mobileInputRefs : emailInputRefs
-    
+
     otpArray[index] = value.slice(-1)
     setOTP(otpArray)
-    
+
     if (value && index < 3) {
       refs.current[index + 1]?.focus()
     }
@@ -517,7 +565,7 @@ function DesktopOTPPage() {
 
   const handleKeyDown = (e, index, type) => {
     const refs = type === 'mobile' ? mobileInputRefs : emailInputRefs
-    
+
     if (e.key === 'Backspace' && !e.target.value && index > 0) {
       refs.current[index - 1]?.focus()
     }
@@ -526,7 +574,7 @@ function DesktopOTPPage() {
   const handlePaste = (e, type) => {
     e.preventDefault()
     const pastedData = e.clipboardData.getData('text').slice(0, 4).split('')
-    
+
     if (pastedData.every(char => /^\d$/.test(char))) {
       if (type === 'mobile') {
         setMobileOTP([...pastedData, ...new Array(4 - pastedData.length).fill('')])
@@ -540,10 +588,10 @@ function DesktopOTPPage() {
     e.preventDefault()
     setError('')
     setSuccess('')
-    
+
     const mobileOTPString = mobileOTP.join('')
     const emailOTPString = emailOTP.join('')
-    
+
     const isDubai = String(countryParam) === '2'
 
     if (type === 'forgot-password' && otpVerified) {
@@ -560,26 +608,73 @@ function DesktopOTPPage() {
         return
       }
     } else {
-      // Validation: validate OTP based on which field is visible
-      if (showMobile && !showEmail) {
-        if (mobileOTPString.length !== 4) {
-          setError('Please enter complete mobile OTP')
-          return
-        }
-      } else if (showEmail && !showMobile) {
-        if (emailOTPString.length !== 4) {
-          setError('Please enter complete email OTP')
-          return
-        }
-      } else {
-        if (isDubai) {
+      // Validation: validate OTP based on which flow and visible/required field
+      if (type === 'register') {
+        if (showMobile && !showEmail) {
+          if (mobileOTPString.length !== 4) {
+            setError('Please enter complete mobile OTP')
+            return
+          }
+        } else if (showEmail && !showMobile) {
           if (emailOTPString.length !== 4) {
             setError('Please enter complete email OTP')
             return
           }
         } else {
+          if (isDubai) {
+            if (emailOTPString.length !== 4) {
+              setError('Please enter complete email OTP')
+              return
+            }
+            if (mobileOTPString.length > 0 && mobileOTPString.length !== 4) {
+              setError('Please enter complete 4-digit mobile OTP or leave it blank')
+              return
+            }
+          } else {
+            if (mobileOTPString.length !== 4) {
+              setError('Please enter complete mobile OTP')
+              return
+            }
+            if (emailOTPString.length > 0 && emailOTPString.length !== 4) {
+              setError('Please enter complete 4-digit email OTP or leave it blank')
+              return
+            }
+          }
+        }
+      } else if (type === 'login') {
+        if (showMobile && !showEmail) {
           if (mobileOTPString.length !== 4) {
             setError('Please enter complete mobile OTP')
+            return
+          }
+        } else if (showEmail && !showMobile) {
+          if (emailOTPString.length !== 4) {
+            setError('Please enter complete email OTP')
+            return
+          }
+        } else {
+          if (loginTypeParam === 'email' || (isDubai && emailOTPString.length === 4)) {
+            if (emailOTPString.length !== 4) {
+              setError('Please enter complete email OTP')
+              return
+            }
+          } else {
+            if (mobileOTPString.length !== 4) {
+              setError('Please enter complete mobile OTP')
+              return
+            }
+          }
+        }
+      } else {
+        // forgot-password
+        if (forgotTypeParam === 'phone') {
+          if (mobileOTPString.length !== 4) {
+            setError('Please enter complete mobile OTP')
+            return
+          }
+        } else {
+          if (emailOTPString.length !== 4) {
+            setError('Please enter complete email OTP')
             return
           }
         }
@@ -590,7 +685,7 @@ function DesktopOTPPage() {
 
     try {
       let response
-      
+
       if (type === 'forgot-password') {
         if (!otpVerified) {
           const otp = forgotTypeParam === 'phone' ? mobileOTPString : emailOTPString
@@ -609,51 +704,43 @@ function DesktopOTPPage() {
         } else {
           response = await authService.resetPassword(phone || email, newPassword)
         }
+      } else if (type === 'register') {
+        // Registration flow: ALWAYS use verify_otp endpoint (/verify_otp)
+        response = await authService.verifyOTP(
+          userId,
+          mobileOTPString,
+          emailOTPString,
+          phone || email,
+          countryParam
+        )
       } else {
-        // Regular OTP verification for register/login
+        // Login flow: ALWAYS use verify_otp_new endpoint (/verify_otp_new)
+        let otp = ''
+        let otpType = 'mobile'
+
         if (showMobile && !showEmail) {
-          response = await authService.verifyOTPNew(
-            userId,
-            mobileOTPString,
-            'mobile',
-            phone || email,
-            countryParam
-          )
+          otp = mobileOTPString
+          otpType = 'mobile'
         } else if (showEmail && !showMobile) {
-          response = await authService.verifyOTPNew(
-            userId,
-            emailOTPString,
-            'email',
-            phone || email,
-            countryParam
-          )
+          otp = emailOTPString
+          otpType = 'email'
         } else {
-          if (mobileOTPString.length === 4 && emailOTPString.length !== 4) {
-            response = await authService.verifyOTPNew(
-              userId,
-              mobileOTPString,
-              'mobile',
-              phone || email,
-              countryParam
-            )
-          } else if (emailOTPString.length === 4 && mobileOTPString.length !== 4) {
-            response = await authService.verifyOTPNew(
-              userId,
-              emailOTPString,
-              'email',
-              phone || email,
-              countryParam
-            )
+          if (loginTypeParam === 'email' || (isDubai && emailOTPString.length === 4)) {
+            otp = emailOTPString
+            otpType = 'email'
           } else {
-            response = await authService.verifyOTP(
-              userId,
-              mobileOTPString,
-              emailOTPString,
-              phone || email,
-              countryParam
-            )
+            otp = mobileOTPString
+            otpType = 'mobile'
           }
         }
+
+        response = await authService.verifyOTPNew(
+          userId,
+          otp,
+          otpType,
+          phone || email,
+          countryParam
+        )
       }
 
       if (response.status) {
@@ -664,9 +751,18 @@ function DesktopOTPPage() {
               window.location.href = '/user/login'
             }, 1500)
           }
+        } else if (type === 'login') {
+          const returnUrl = typeof window !== 'undefined' ? sessionStorage.getItem('returnUrl') : null
+          const targetUrl = returnUrl || '/user/dashboard'
+          if (returnUrl) sessionStorage.removeItem('returnUrl')
+
+          setSuccess('Login successful! Redirecting...')
+          setTimeout(() => {
+            window.location.href = targetUrl
+          }, 1500)
         } else {
+          // Register
           setSuccess('Verification successful! Redirecting to login...')
-          
           setTimeout(() => {
             window.location.href = '/user/login'
           }, 1500)
@@ -740,7 +836,7 @@ function DesktopOTPPage() {
 
           <div className="w-full rounded-2xl border border-line bg-surface p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_45px_rgba(0,0,0,0.04)] transition-all duration-300 relative overflow-hidden">
             <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-orange opacity-[0.03] blur-3xl pointer-events-none" />
-            
+
             <form onSubmit={handleSubmit} className="space-y-3 relative z-10">
               {!otpVerified && (showMobile && showEmail ? (
                 String(countryParam) === '2' ? (

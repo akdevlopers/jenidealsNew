@@ -485,7 +485,7 @@ function DesktopRegisterPage() {
         const isEmailVerified = (userData.is_email_verified == 1 || userData.email_verified == 1) ? 1 : 0
         const userId = userData.id || response.userId || ''
         
-        router.push(`/user/verify-otp?userId=${userId}&type=register&phone=${userPhone}&email=${userEmail}&country=${countryId}&mobileVerified=${isMobileVerified}&emailVerified=${isEmailVerified}`)
+        router.push(`/user/verify-otp?userId=${userId}&type=register&phone=${userPhone}&email=${userEmail}&countryId=${countryId}&country=${countryId}&mobileVerified=${isMobileVerified}&emailVerified=${isEmailVerified}`)
       } else {
         setErrors({ submit: response?.message || 'Registration failed. Please try again.' })
       }
