@@ -33,8 +33,8 @@ function HelpSupportContent() {
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [expandedFAQ, setExpandedFAQ] = useState(null)
 
-  const whatsappNumber = '971545320252' // WhatsApp number
-  const phoneNumber = '+971545320252' // Phone number
+  const whatsappNumber = '918939691995' // WhatsApp number
+  const phoneNumber = '+918939691995' // Phone number
   const emailAddress = 'customersupport@jenideals.com'
 
   const handleWhatsApp = () => {

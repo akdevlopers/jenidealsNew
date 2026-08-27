@@ -9,7 +9,7 @@ export function WhatsAppWidget() {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleStartChat = () => {
-    window.open("https://wa.me/971545320252?text=Hello%20Jeni%20Deals%20Support", "_blank")
+    window.open("https://wa.me/918939691995?text=Hello%20Jeni%20Deals%20Support", "_blank")
   }
 
   return (

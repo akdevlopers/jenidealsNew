@@ -590,7 +590,7 @@ function DesktopDashboardPage() {
 
             <div className="mt-auto space-y-3">
               <a
-                href="https://wa.me/971545320252?text=Hello%20Jeni%20Deals%20Support"
+                href="https://wa.me/918939691995?text=Hello%20Jeni%20Deals%20Support"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 py-3 text-xs font-bold text-white shadow-md transition-all hover:shadow-lg active:scale-[0.98]"
