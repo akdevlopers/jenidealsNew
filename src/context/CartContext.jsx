@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useCountry } from './CountryContext'
 
 const CartContext = createContext()
@@ -51,7 +51,7 @@ export function CartProvider({ children }) {
     }
   }, [cart, loading])
 
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = useCallback((product, quantity = 1) => {
     if (!product || !product.id) return
     setCart(prevCart => {
       const currentCart = prevCart || []
@@ -84,9 +84,9 @@ export function CartProvider({ children }) {
         return [...currentCart, { ...productWithAttribute, quantity }]
       }
     })
-  }
+  }, [])
 
-  const removeFromCart = (productIds, attributeId = null) => {
+  const removeFromCart = useCallback((productIds, attributeId = null) => {
     if (!productIds) return
     setCart(prevCart => {
       const updated = (prevCart || []).filter(item => {
@@ -108,9 +108,9 @@ export function CartProvider({ children }) {
       }
       return updated
     })
-  }
+  }, [])
 
-  const updateQuantity = (productId, quantity, attributeId = null) => {
+  const updateQuantity = useCallback((productId, quantity, attributeId = null) => {
     if (quantity <= 0) {
       removeFromCart(productId, attributeId)
       return
@@ -125,9 +125,9 @@ export function CartProvider({ children }) {
         return { ...item, quantity }
       })
     )
-  }
+  }, [removeFromCart])
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCart([])
     if (typeof window !== 'undefined') {
       try {
@@ -135,21 +135,21 @@ export function CartProvider({ children }) {
       } catch (e) {
       }
     }
-  }
+  }, [])
 
-  const getCartTotal = () => {
+  const getCartTotal = useCallback(() => {
     return (cart || []).reduce((total, item) => {
       if (!item) return total
       const price = parseFloat(item.offer_price || item.price || 0)
       return total + (price * (item.quantity || 1))
     }, 0)
-  }
+  }, [cart])
 
-  const getCartCount = () => {
+  const getCartCount = useCallback(() => {
     return (cart || []).reduce((count, item) => count + (item?.quantity || 0), 0)
-  }
+  }, [cart])
 
-  const isInCart = (productId, attributeId = null) => {
+  const isInCart = useCallback((productId, attributeId = null) => {
     return (cart || []).some(item => {
       if (!item || item.id !== productId) return false
       if (attributeId !== null && attributeId !== undefined) {
@@ -157,7 +157,7 @@ export function CartProvider({ children }) {
       }
       return true
     })
-  }
+  }, [cart])
 
   return (
     <CartContext.Provider

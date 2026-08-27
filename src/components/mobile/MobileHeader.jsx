@@ -110,10 +110,11 @@ export function MobileHeader({ onOpenMenu, showSearch = true, showBack = false, 
           <button 
             onClick={() => setCountrySheetOpen(true)}
             disabled={isCountryLoading || !country}
+            suppressHydrationWarning
             className="flex flex-1 items-center gap-2 text-left disabled:opacity-50"
           >
             {/* Country flag icon */}
-            <div className="relative shrink-0 mr-1">
+            <div className="relative shrink-0 mr-1" suppressHydrationWarning>
               {isCountryLoading || !country ? (
                 <div className="h-3 w-5 rounded bg-white/20 animate-pulse" />
               ) : (
@@ -125,9 +126,9 @@ export function MobileHeader({ onOpenMenu, showSearch = true, showBack = false, 
               )}
             </div>
             
-            <div className="flex flex-col">
+            <div className="flex flex-col" suppressHydrationWarning>
               <span className="text-[11px] text-white/70">Deliver to</span>
-              <span className="flex items-center gap-1 text-[13px] font-semibold leading-none text-white mt-0.5">
+              <span className="flex items-center gap-1 text-[13px] font-semibold leading-none text-white mt-0.5" suppressHydrationWarning>
                 {isCountryLoading || !country ? "Loading..." : country.name}
                 <ChevronDown className="h-3 w-3 text-white/70" strokeWidth={2.25} />
               </span>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { useCart } from '../../src/context/CartContext'
@@ -10,8 +10,12 @@ function PaymentCallbackContent() {
   const searchParams = useSearchParams()
   const { clearCart } = useCart()
   const [status, setStatus] = useState('processing') // processing, success, failed, cancelled
+  const hasProcessedRef = useRef(false)
 
   useEffect(() => {
+    if (hasProcessedRef.current) return
+    hasProcessedRef.current = true
+
     const paymentStatus = searchParams.get('status') || searchParams.get('payment_status')
     const orderId = searchParams.get('order_id') || searchParams.get('orderId')
     const transactionId = searchParams.get('transaction_id') || searchParams.get('transactionId')

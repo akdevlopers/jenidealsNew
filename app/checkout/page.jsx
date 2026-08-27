@@ -81,6 +81,40 @@ function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirm
   );
 }
 
+function OrderErrorModal({ isOpen, onClose, title = "Cannot Place Order", message }) {
+  if (!isOpen || !message) return null;
+  return (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+        onClick={onClose}
+      />
+      {/* Modal Box */}
+      <div className="relative w-full max-w-sm transform rounded-2xl bg-white p-6 shadow-2xl border border-line transition-all duration-300 scale-100 flex flex-col text-center items-center">
+        <div className="w-14 h-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mb-3">
+          <svg className="h-7 w-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 className="font-display text-lg font-bold text-navy">{title}</h3>
+        <p className="mt-2 text-sm text-fg leading-relaxed font-medium">
+          {message}
+        </p>
+        <div className="mt-6 w-full">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-xl bg-orange hover:bg-orange-deep px-5 py-3 text-sm font-bold text-white transition-colors active:scale-95 shadow-md shadow-orange-500/10"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -112,6 +146,7 @@ export default function CheckoutPage() {
   // Popups & Alerts
   const [deleteAddressId, setDeleteAddressId] = useState(null)
   const [toast, setToast] = useState({ message: '', type: 'error' })
+  const [orderError, setOrderError] = useState(null)
 
   const { user, isAuthenticated, loading: authLoading } = useAuth()
   const { cart, getCartTotal, clearCart, removeFromCart } = useCart()
@@ -921,12 +956,24 @@ export default function CheckoutPage() {
         removeOrderedItemsFromCart()
         router.push(`/order-success?orderId=${response.Data.orderId || response.Data.order_id || ''}`)
       } else {
-        setToast({ message: response.message || 'Failed to place order. Please try again.', type: 'error' })
+        const errorMsg = response?.message || 'Failed to place order. Please try again.'
+        setOrderError({
+          title: 'Cannot Place Order',
+          message: errorMsg
+        })
+        setToast({ message: errorMsg, type: 'error' })
         setIsProcessing(false)
+        setOrderPlaced(false)
       }
     } catch (error) {
-      setToast({ message: 'Failed to place order. Please try again.', type: 'error' })
+      const errorMsg = error?.message || 'Failed to place order. Please try again.'
+      setOrderError({
+        title: 'Cannot Place Order',
+        message: errorMsg
+      })
+      setToast({ message: errorMsg, type: 'error' })
       setIsProcessing(false)
+      setOrderPlaced(false)
     }
   }
 
@@ -2356,6 +2403,13 @@ export default function CheckoutPage() {
         message="Are you sure you want to delete this shipping address? This action cannot be undone."
         confirmText="Delete Address"
         isDangerous={true}
+      />
+
+      <OrderErrorModal
+        isOpen={orderError !== null}
+        onClose={() => setOrderError(null)}
+        title={orderError?.title || "Cannot Place Order"}
+        message={orderError?.message || ""}
       />
 
       {toast.message && (

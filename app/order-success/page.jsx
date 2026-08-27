@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle2, Package, ArrowRight, Truck, ShieldCheck, Clock, Copy, Check, Sparkles } from 'lucide-react'
 import { MobileHeader } from '../../src/components/mobile/MobileHeader'
@@ -14,6 +14,7 @@ function OrderSuccessContent() {
   const [isMobile, setIsMobile] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [copied, setCopied] = useState(false)
+  const hasRunCleanup = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const orderId = searchParams.get('orderId')
@@ -30,8 +31,10 @@ function OrderSuccessContent() {
   }, [])
 
   useEffect(() => {
-    // Clear cart & sync latest user wallet balance when order is successful
-    if (isMounted) {
+    // Run cart cleanup & wallet sync strictly once on successful order
+    if (isMounted && !hasRunCleanup.current) {
+      hasRunCleanup.current = true
+
       // Clean up ordered products from cart in localStorage if specific IDs were saved
       try {
         const lastOrderedJson = sessionStorage.getItem('last_ordered_product_ids')
@@ -75,7 +78,7 @@ function OrderSuccessContent() {
 
       syncWalletBalance()
     }
-  }, [isMounted, orderId, clearCart])
+  }, [isMounted, clearCart])
 
   const handleCopyOrderId = () => {
     if (orderId) {

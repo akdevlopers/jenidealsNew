@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 const SearchContext = createContext(null)
@@ -20,7 +20,7 @@ export function SearchProvider({ children }) {
   const router = useRouter()
 
   // Load search history from localStorage
-  useState(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('searchHistory')

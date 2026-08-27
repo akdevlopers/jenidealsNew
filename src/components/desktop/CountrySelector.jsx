@@ -24,6 +24,7 @@ export function CountrySelector() {
         onClick={() => setOpen((v) => !v)}
         disabled={isLoading || !country}
         aria-label={country ? `Ship to ${country.name}` : "Select country"}
+        suppressHydrationWarning
         className="group flex items-center gap-1 h-9 px-2 rounded-full text-on-navy hover:bg-navy-soft transition-colors disabled:opacity-50 cursor-pointer"
       >
         {isLoading || !country ? (

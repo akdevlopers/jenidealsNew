@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
-import { getCategoryList, getCategoriesWithSubAndChild, sortCategoriesByOrderBy, getFlashSaleProducts } from "../services/homeService";
+import { getCategoryList, sortCategoriesByOrderBy, getFlashSaleProducts, clearApiCache } from "../services/homeService";
 
 export const countries = [
   { code: "in", name: "India", city: "Mumbai", currency: "₹", rate: 83, zipFormat: "400001", id: "1", phoneCode: "+91" },
@@ -13,122 +13,258 @@ const CountryCtx = createContext(null);
 
 export function flagUrl(code) {
   if (!code) return '';
-  return `https://flagcdn.com/${code}.svg`;
+  return `https://flagcdn.com/${code.toLowerCase()}.svg`;
+}
+
+/**
+ * Synchronous client-side hint detection using Timezone and Browser Language
+ */
+function detectCountryFromClient() {
+  if (typeof window === 'undefined') return null;
+
+  // 1. Timezone detection (instant 0ms resolution)
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (
+      tz.includes('Kolkata') ||
+      tz.includes('Calcutta') ||
+      tz.includes('India') ||
+      tz.includes('Colombo') ||
+      tz.includes('Kathmandu') ||
+      tz.includes('Dhaka')
+    ) {
+      return countries[0]; // India
+    }
+    if (
+      tz.includes('Dubai') ||
+      tz.includes('Abu_Dhabi') ||
+      tz.includes('Muscat') ||
+      tz.includes('Riyadh') ||
+      tz.includes('Qatar') ||
+      tz.includes('Bahrain') ||
+      tz.includes('Kuwait')
+    ) {
+      return countries[1]; // UAE
+    }
+  } catch (e) {}
+
+  // 2. Browser Locale detection
+  try {
+    const languages = navigator.languages || [navigator.language || ''];
+    for (const lang of languages) {
+      const l = (lang || '').toLowerCase();
+      if (
+        l.includes('-in') ||
+        l.startsWith('hi') ||
+        l.startsWith('ta') ||
+        l.startsWith('te') ||
+        l.startsWith('ml') ||
+        l.startsWith('kn') ||
+        l.startsWith('gu') ||
+        l.startsWith('mr') ||
+        l.startsWith('pa') ||
+        l.startsWith('bn')
+      ) {
+        return countries[0]; // India
+      }
+      if (l.includes('-ae') || l.startsWith('ar-ae')) {
+        return countries[1]; // UAE
+      }
+    }
+  } catch (e) {}
+
+  return null;
 }
 
 export function CountryProvider({ children }) {
-  const [country, setCountry] = useState(() => {
+  // Read saved country from localStorage synchronously if available on client
+  const [country, setCountryState] = useState(() => {
     if (typeof window !== 'undefined') {
-      const savedCountryCode = localStorage.getItem('selectedCountry');
-      if (savedCountryCode) {
-        const saved = countries.find(c => c.code === savedCountryCode);
-        if (saved) return saved;
-      }
+      try {
+        const savedCode = localStorage.getItem('selectedCountry');
+        if (savedCode) {
+          const saved = countries.find(c => c.code.toLowerCase() === savedCode.toLowerCase());
+          if (saved) return saved;
+        }
+      } catch (e) {}
     }
-    return countries[1]; // Default to UAE (Dubai)
+    return countries[0]; // Default initial
   });
-  const [isLoading, setIsLoading] = useState(false);
+
+  // If country was already saved by user in localStorage, no need to wait for IP detection
+  const [isLoading, setIsLoading] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedCode = localStorage.getItem('selectedCountry');
+        if (savedCode) return false;
+      } catch (e) {}
+    }
+    return true; // First time visit: wait for IP detection
+  });
+
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [hasFlashDeals, setHasFlashDeals] = useState(false);
   const [flashDealsCount, setFlashDealsCount] = useState(0);
   const { logout } = useAuth();
 
-  // First, determine the user's country from localStorage or IP detection or default
+  // Determine user's country from localStorage or IP detection API
   useEffect(() => {
+    let isCancelled = false;
+
     const determineCountry = async () => {
-      // Check if user has previously selected a country
-      const savedCountryCode = localStorage.getItem('selectedCountry');
-
-      if (savedCountryCode) {
-        const savedCountry = countries.find(c => c.code === savedCountryCode);
-        if (savedCountry) {
-          setCountry(savedCountry);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // If no saved country, detect from IP
+      // 1. Check if user already has an explicitly saved country in localStorage
       try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-        const detectedCountryCode = data.country_code?.toLowerCase();
-        
-        if (detectedCountryCode) {
-          const detectedCountry = countries.find(c => c.code === detectedCountryCode);
-          if (detectedCountry) {
-            setCountry(detectedCountry);
-            setIsLoading(false);
+        const savedCountryCode = localStorage.getItem('selectedCountry');
+        if (savedCountryCode) {
+          const savedCountry = countries.find(c => c.code.toLowerCase() === savedCountryCode.toLowerCase());
+          if (savedCountry) {
+            if (!isCancelled) {
+              setCountryState(savedCountry);
+              setIsLoading(false);
+            }
             return;
           }
         }
-      } catch (error) {
+      } catch (e) {}
+
+      // 2. First-time visitor: detect from Next.js API route (/api/detect-country)
+      let detectedCode = null;
+
+      try {
+        const res = await fetch('/api/detect-country', { signal: AbortSignal.timeout(2500) });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.countryCode) {
+            detectedCode = data.countryCode.toLowerCase();
+          }
+        }
+      } catch (e) {}
+
+      // 3. Fallback: ipwho.is
+      if (!detectedCode) {
+        try {
+          const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(2500) });
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.country_code) {
+              detectedCode = data.country_code.toLowerCase();
+            }
+          }
+        } catch (e) {}
       }
 
-      // If IP detection fails or country not in list, default to UAE (Dubai)
-      setCountry(countries[1]);
+      // 4. Fallback: api.country.is
+      if (!detectedCode) {
+        try {
+          const res = await fetch('https://api.country.is/', { signal: AbortSignal.timeout(2500) });
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.country) {
+              detectedCode = data.country.toLowerCase();
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 5. Fallback: client timezone hint
+      if (!detectedCode) {
+        const clientHint = detectCountryFromClient();
+        if (clientHint) {
+          detectedCode = clientHint.code;
+        }
+      }
+
+      if (isCancelled) return;
+
+      let matchedCountry = countries[0];
+      if (detectedCode) {
+        const found = countries.find(c => c.code.toLowerCase() === detectedCode.toLowerCase());
+        if (found) matchedCountry = found;
+      }
+
+      // Save detected country to localStorage for all future visits
+      try {
+        localStorage.setItem('selectedCountry', matchedCountry.code);
+        localStorage.setItem('selectedCountryId', matchedCountry.id);
+      } catch (e) {}
+
+      setCountryState(matchedCountry);
       setIsLoading(false);
     };
 
     determineCountry();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
-  // Fetch categories & flash sale products only after country is set
+  // Fetch categories & flash sale products only after country is set and not loading
   useEffect(() => {
-    if (!country) return; // Don't fetch until country is determined
+    if (isLoading || !country?.id) return;
+
+    let isCancelled = false;
 
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
         const data = await getCategoryList(country.id);
-        setCategories(sortCategoriesByOrderBy(data));
+        if (!isCancelled) {
+          setCategories(sortCategoriesByOrderBy(data));
+        }
       } catch (error) {
       } finally {
-        setCategoriesLoading(false);
+        if (!isCancelled) {
+          setCategoriesLoading(false);
+        }
       }
     };
 
     const fetchFlashDeals = async () => {
       try {
         const data = await getFlashSaleProducts(country.id);
-        const products = data?.products || [];
-        const count = products.length;
-        setFlashDealsCount(count);
-        setHasFlashDeals(count > 0);
+        if (!isCancelled) {
+          const products = data?.products || [];
+          const count = products.length;
+          setFlashDealsCount(count);
+          setHasFlashDeals(count > 0);
+        }
       } catch (error) {
-        setFlashDealsCount(0);
-        setHasFlashDeals(false);
+        if (!isCancelled) {
+          setFlashDealsCount(0);
+          setHasFlashDeals(false);
+        }
       }
     };
 
     fetchCategories();
     fetchFlashDeals();
-  }, [country?.id]); // Only re-run if country.id changes
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [country?.id, isLoading]);
 
   const changeCountry = (newCountry) => {
-    // Get current pathname
-    const currentPath = window.location.pathname;
-    
-    // Check if current page is login, register, verify-otp, or forgot-password
-    const authPages = ['/user/login', '/user/register', '/user/verify-otp', '/user/forgot-password'];
-    const isAuthPage = authPages.some(page => currentPath.includes(page));
-    
-    // Save the new country code first
-    localStorage.setItem('selectedCountry', newCountry.code);
-    
-    // Clear all other localStorage items except selectedCountry
-    const countryCode = localStorage.getItem('selectedCountry');
-    localStorage.clear();
-    localStorage.setItem('selectedCountry', countryCode);
-    
-    // Logout the user
-    logout();
-    
+    if (!newCountry) return;
+
+    try {
+      // Save the new country code and id in localStorage
+      localStorage.setItem('selectedCountry', newCountry.code);
+      localStorage.setItem('selectedCountryId', newCountry.id);
+
+      // Clear in-memory API response cache
+      clearApiCache();
+
+      // Clear user auth session if switching country
+      logout();
+    } catch (e) {}
+
     // Update country state
-    setCountry(newCountry);
-    
-    // Redirect to home page to clear all cached data and state
+    setCountryState(newCountry);
+
+    // Reload page to re-fetch all country-specific data fresh
     window.location.href = '/';
   };
 
@@ -142,10 +278,10 @@ export function CountryProvider({ children }) {
   };
 
   return (
-    <CountryCtx.Provider value={{ 
-      country, 
-      setCountry: changeCountry, 
-      price, 
+    <CountryCtx.Provider value={{
+      country,
+      setCountry: changeCountry,
+      price,
       isLoading,
       categories,
       categoriesLoading,
