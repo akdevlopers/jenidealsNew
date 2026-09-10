@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   MapPin,
@@ -268,6 +268,8 @@ export default function CheckoutPage() {
     }
   }, [toast.message])
 
+  const hasFetchedInitRef = useRef(false)
+
   useEffect(() => {
     // Wait for auth check to complete before redirecting
     if (authLoading) {
@@ -283,33 +285,39 @@ export default function CheckoutPage() {
       const returnUrl = hasBuyNowParam ? '/checkout?buynow=true' : '/checkout'
       sessionStorage.setItem('returnUrl', returnUrl)
       router.push('/user/login')
-    } else if (!hasBuyNowParam && cart.length === 0 && !orderPlaced) {
+      return
+    }
+
+    if (!hasBuyNowParam && cart.length === 0 && !orderPlaced) {
       // Only redirect to cart if not Buy Now mode and cart is empty
       router.push('/cart')
-    } else if (hasBuyNowParam && !orderPlaced) {
+      return
+    }
+
+    if (hasBuyNowParam && !orderPlaced) {
       // If Buy Now mode but no item in sessionStorage, redirect to home
       const buyNowData = sessionStorage.getItem('buyNowItem') || localStorage.getItem('buyNowItem')
       if (!buyNowData) {
         router.push('/')
-      } else if (user) {
-        fetchAddresses()
-        fetchPaymentMethods()
-        fetchWalletBalance()
-        fetchPaymentCharges()
+        return
       }
-    } else if (user) {
+    }
+
+    // Fetch user-specific checkout data once user and country are ready
+    if (user?.id && country?.id && !hasFetchedInitRef.current) {
+      hasFetchedInitRef.current = true
       fetchAddresses()
       fetchPaymentMethods()
       fetchWalletBalance()
-      fetchPaymentCharges()
     }
-  }, [isAuthenticated, authLoading, cart, orderPlaced, router, user])
+  }, [isAuthenticated, authLoading, cart.length, orderPlaced, router, user?.id, country?.id])
 
+  // Single source of truth for payment charges: only fetch when paymentMethod, country, or coupon discount changes
   useEffect(() => {
     if (paymentMethod && country?.id) {
       fetchPaymentCharges(paymentMethod)
     }
-  }, [paymentMethod, country?.id])
+  }, [paymentMethod, country?.id, couponDiscount])
 
   const fetchAddresses = async () => {
     try {
@@ -356,9 +364,8 @@ export default function CheckoutPage() {
           }
         })
         setPaymentMethods(methods)
-        if (methods.length > 0 && (paymentMethod === undefined || paymentMethod === null || paymentMethod === '')) {
+        if (methods.length > 0 && !paymentMethod) {
           setPaymentMethod(methods[0].id)
-          fetchPaymentCharges(methods[0].id)
         }
       }
     } catch (error) {
@@ -378,9 +385,8 @@ export default function CheckoutPage() {
         }
       ]
       setPaymentMethods(defaultMethods)
-      if (paymentMethod === undefined || paymentMethod === null || paymentMethod === '') {
+      if (!paymentMethod) {
         setPaymentMethod(defaultMethods[0].id)
-        fetchPaymentCharges(defaultMethods[0].id)
       }
     }
   }
@@ -415,8 +421,9 @@ export default function CheckoutPage() {
   const handleSelectPaymentMethod = (methodId) => {
     if (methodId === undefined || methodId === null || methodId === '') return
     const selectedId = methodId.toString()
-    setPaymentMethod(selectedId)
-    fetchPaymentCharges(selectedId)
+    if (selectedId !== paymentMethod) {
+      setPaymentMethod(selectedId)
+    }
   }
 
   const fetchPaymentCharges = async (overridePaymentMethod, overrideCouponDiscount) => {

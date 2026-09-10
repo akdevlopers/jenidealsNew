@@ -77,30 +77,9 @@ function detectCountryFromClient() {
 }
 
 export function CountryProvider({ children }) {
-  // Read saved country from localStorage synchronously if available on client
-  const [country, setCountryState] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedCode = localStorage.getItem('selectedCountry');
-        if (savedCode) {
-          const saved = countries.find(c => c.code.toLowerCase() === savedCode.toLowerCase());
-          if (saved) return saved;
-        }
-      } catch (e) {}
-    }
-    return countries[0]; // Default initial
-  });
-
-  // If country was already saved by user in localStorage, no need to wait for IP detection
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedCode = localStorage.getItem('selectedCountry');
-        if (savedCode) return false;
-      } catch (e) {}
-    }
-    return true; // First time visit: wait for IP detection
-  });
+  // Safe default initialization for SSR consistency (localStorage is read in useEffect)
+  const [country, setCountryState] = useState(countries[0]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -108,7 +87,7 @@ export function CountryProvider({ children }) {
   const [flashDealsCount, setFlashDealsCount] = useState(0);
   const { logout } = useAuth();
 
-  // Determine user's country from localStorage or IP detection API
+  // Determine user's country from localStorage, client timezone/locale, or IP detection API
   useEffect(() => {
     let isCancelled = false;
 
@@ -128,7 +107,14 @@ export function CountryProvider({ children }) {
         }
       } catch (e) {}
 
-      // 2. First-time visitor: detect from Next.js API route (/api/detect-country)
+      // 2. Immediate Client Timezone / Locale detection (0ms instant user country hint)
+      const clientHint = detectCountryFromClient();
+      if (clientHint && !isCancelled) {
+        setCountryState(clientHint);
+        setIsLoading(false);
+      }
+
+      // 3. First-time visitor: verify with accurate IP detection API
       let detectedCode = null;
 
       try {
@@ -141,7 +127,7 @@ export function CountryProvider({ children }) {
         }
       } catch (e) {}
 
-      // 3. Fallback: ipwho.is
+      // 4. Fallback IP Service: ipwho.is
       if (!detectedCode) {
         try {
           const res = await fetch('https://ipwho.is/', { signal: AbortSignal.timeout(2500) });
@@ -154,7 +140,7 @@ export function CountryProvider({ children }) {
         } catch (e) {}
       }
 
-      // 4. Fallback: api.country.is
+      // 5. Fallback IP Service: api.country.is
       if (!detectedCode) {
         try {
           const res = await fetch('https://api.country.is/', { signal: AbortSignal.timeout(2500) });
@@ -167,23 +153,16 @@ export function CountryProvider({ children }) {
         } catch (e) {}
       }
 
-      // 5. Fallback: client timezone hint
-      if (!detectedCode) {
-        const clientHint = detectCountryFromClient();
-        if (clientHint) {
-          detectedCode = clientHint.code;
-        }
-      }
-
       if (isCancelled) return;
 
-      let matchedCountry = countries[0];
+      // Match detected country from IP or fallback to client timezone hint
+      let matchedCountry = clientHint || countries[0];
       if (detectedCode) {
         const found = countries.find(c => c.code.toLowerCase() === detectedCode.toLowerCase());
         if (found) matchedCountry = found;
       }
 
-      // Save detected country to localStorage for all future visits
+      // Save resolved country to localStorage for all future visits
       try {
         localStorage.setItem('selectedCountry', matchedCountry.code);
         localStorage.setItem('selectedCountryId', matchedCountry.id);

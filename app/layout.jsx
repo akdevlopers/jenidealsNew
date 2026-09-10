@@ -5,6 +5,12 @@ import { WhatsAppWidget } from '../src/components/desktop/WhatsAppWidget'
 
 const CLARITY_PROJECT_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || 'y25638ax6l'
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export const metadata = {
   title: 'Jenideals - Multi-Seller Marketplace',
   description: 'The multi-seller marketplace where independent stores and millions of shoppers meet.',

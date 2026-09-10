@@ -68,6 +68,36 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Product Description & Rich HTML Container Styling */
+.product-description-content,
+.product-description-content * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+.product-description-content table {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.product-description-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+.product-description-content pre {
+  max-width: 100% !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-x: auto !important;
+}
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--surface-2); }
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 8px; border: 2px solid var(--surface-2); }

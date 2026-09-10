@@ -81,7 +81,7 @@ function EnhancedProductReviews({ product, rating, reviewsCount }) {
   }
 
   return (
-    <div className="bg-surface rounded-2xl border border-line p-3.5 md:p-5 shadow-xs text-left">
+    <div className="bg-surface rounded-2xl border border-line p-3.5 md:p-5 shadow-xs text-left w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between gap-2.5 mb-4 pb-3 border-b border-line">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <MessageSquare className="h-4.5 w-4.5 text-orange shrink-0" />
@@ -137,23 +137,23 @@ function EnhancedProductReviews({ product, rating, reviewsCount }) {
                 key={star}
                 type="button"
                 onClick={() => setSelectedFilter(selectedFilter === star ? 'all' : star)}
-                className={`w-full flex items-center gap-2.5 text-[11.5px] transition-opacity hover:opacity-80 cursor-pointer ${
+                className={`w-full flex items-center gap-2 text-[11.5px] transition-opacity hover:opacity-80 cursor-pointer ${
                   selectedFilter === star ? 'font-bold text-orange' : 'text-fg-muted'
                 }`}
               >
-                <div className="flex items-center gap-1 w-10 shrink-0 font-bold text-xs">
+                <div className="flex items-center gap-1 w-9 shrink-0 font-bold text-xs">
                   <span>{star}</span>
                   <Star className="h-3 w-3 fill-amber-400 text-amber-400" strokeWidth={0} />
                 </div>
 
-                <div className="flex-1 h-1.5 rounded-full bg-surface-3 overflow-hidden">
+                <div className="flex-1 min-w-0 h-1.5 rounded-full bg-surface-3 overflow-hidden">
                   <div 
                     className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange transition-all duration-500"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
 
-                <span className="w-8 text-right shrink-0 text-[10.5px] font-medium text-fg-subtle">
+                <span className="w-7 text-right shrink-0 text-[10.5px] font-medium text-fg-subtle">
                   {cnt}
                 </span>
               </button>
@@ -229,21 +229,20 @@ function EnhancedProductReviews({ product, rating, reviewsCount }) {
             return (
               <div 
                 key={revId} 
-                className="bg-white border border-line rounded-xl p-3 md:p-3.5 transition-all hover:border-line-strong hover:shadow-2xs text-left"
+                className="bg-white border border-line rounded-xl p-3 md:p-3.5 transition-all hover:border-line-strong hover:shadow-2xs text-left w-full max-w-full overflow-hidden"
               >
                 <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     {/* User Avatar */}
                     <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-tr from-navy to-slate-800 text-white font-bold text-[11px] shadow-xs">
                       {initials}
                     </div>
 
-                    <div className="text-left">
+                    <div className="text-left min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className="text-[12px] font-bold text-fg leading-tight">
+                        <h4 className="text-[12px] font-bold text-fg leading-tight truncate">
                           {reviewerName}
                         </h4>
-
                       </div>
 
                       {/* Stars */}
@@ -272,7 +271,7 @@ function EnhancedProductReviews({ product, rating, reviewsCount }) {
 
                 {cleanComment && (
                   <div className="mt-2 pt-2 border-t border-line/40">
-                    <p className="text-[12px] text-fg-muted leading-snug font-normal">
+                    <p className="text-[12px] text-fg-muted leading-snug font-normal break-words">
                       {`"${cleanComment}"`}
                     </p>
                   </div>
@@ -379,16 +378,16 @@ function AttributeSelector({ attributes, selectedAttribute, onSelectAttribute, f
     : (attributes[0] ? formatAttributeOptionLabel(attributes[0]) : '')
 
   return (
-    <div className={compact ? "py-2" : "py-3"}>
+    <div className={compact ? "py-2 w-full max-w-full" : "py-3 w-full max-w-full"}>
       {/* Header: Title — Selected Value */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         <span className="font-bold text-fg text-[14px]">{groupTitle}</span>
         <span className="text-fg-subtle text-[13px] select-none">—</span>
-        <span className="text-fg-muted text-[14px] font-normal">{selectedDisplay}</span>
+        <span className="text-fg-muted text-[14px] font-normal break-words">{selectedDisplay}</span>
       </div>
 
       {/* Options Buttons */}
-      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
         {attributes.map((attr, idx) => {
           const isSelected = selectedAttribute?.id === attr.id || (!selectedAttribute && idx === 0)
           const label = formatAttributeOptionLabel(attr, idx)
@@ -398,7 +397,7 @@ function AttributeSelector({ attributes, selectedAttribute, onSelectAttribute, f
               key={attr.id || idx}
               type="button"
               onClick={() => onSelectAttribute(attr)}
-              className={`min-w-[80px] sm:min-w-[90px] px-4 sm:px-5 py-2.5 rounded-2xl text-[13px] sm:text-[13.5px] transition-all cursor-pointer text-center select-none ${
+              className={`max-w-full px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[12.5px] sm:text-[13.5px] transition-all cursor-pointer text-center select-none break-words ${
                 isSelected
                   ? 'border-2 border-orange bg-surface text-orange font-bold shadow-2xs'
                   : 'border border-line bg-surface text-fg font-medium hover:border-fg-muted/60 active:scale-95'
@@ -693,8 +692,8 @@ export default function ProductDetailPage() {
   const allImages = Array.from(new Set([product?.product_img_url, ...images].filter(Boolean)))
 
   const MobileUI = () => (
-    <div className="md:hidden flex min-h-screen flex-col bg-bg">
-      <header className="sticky top-0 z-30 flex items-center justify-between bg-navy px-3 py-3 text-white shadow-md">
+    <div className="md:hidden flex min-h-screen flex-col bg-bg w-full max-w-full overflow-x-hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between bg-navy px-3 py-3 text-white shadow-md w-full max-w-full">
         <button
           onClick={() => router.back()}
           className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white active:bg-navy-soft transition-colors"
@@ -704,7 +703,7 @@ export default function ProductDetailPage() {
         <h1 className="flex-1 font-display text-[15px] font-bold truncate text-white ml-2 text-left">
           {product.product_name}
         </h1>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button 
             onClick={() => router.push('/cart')}
             className="relative grid h-9 w-9 place-items-center rounded-full text-white active:bg-navy-soft transition-colors"
@@ -731,8 +730,8 @@ export default function ProductDetailPage() {
         </div>
       </header>
 
-      <main className="flex-1 pb-24">
-        <div className="relative bg-[#FAF5FF] flex flex-col items-center py-6 px-4">
+      <main className="flex-1 pb-28 w-full max-w-full overflow-x-hidden">
+        <div className="relative bg-[#FAF5FF] flex flex-col items-center py-6 px-4 w-full max-w-full overflow-hidden">
           <div className="w-full aspect-square max-w-[340px] flex items-center justify-center">
             {allImages.length > 0 ? (
               <img
@@ -755,12 +754,12 @@ export default function ProductDetailPage() {
         </div>
 
         {allImages.length > 1 && (
-          <div className="bg-surface border-b border-line px-4 py-3 flex justify-center gap-3">
+          <div className="bg-surface border-b border-line px-4 py-3 flex items-center justify-center gap-2.5 overflow-x-auto no-scrollbar max-w-full">
             {allImages.map((img, idx) => (
               <button
                 key={idx}
                 onClick={() => setSelectedImage(idx)}
-                className={`relative h-14 w-14 overflow-hidden rounded-md transition-all ${
+                className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-md transition-all ${
                   idx === selectedImage ? 'ring-2 ring-orange ring-offset-1' : 'opacity-60 hover:opacity-100'
                 }`}
               >
@@ -770,7 +769,7 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        <div className="bg-surface px-4 py-4 border-b border-line">
+        <div className="bg-surface px-4 py-4 border-b border-line w-full max-w-full overflow-hidden">
           {product.brand && (
             <span className="text-success font-semibold text-[13px] flex items-center gap-1.5 mb-1.5">
               <Check className="h-4 w-4 shrink-0 bg-success-tint p-0.5 rounded-full text-success" strokeWidth={3} />
@@ -778,7 +777,7 @@ export default function ProductDetailPage() {
             </span>
           )}
 
-          <h2 className="text-[19px] font-bold text-fg leading-snug mb-2">
+          <h2 className="text-[19px] font-bold text-fg leading-snug mb-2 break-words">
             {product.product_name}
           </h2>
 
@@ -797,7 +796,7 @@ export default function ProductDetailPage() {
             <span className="text-[13px] text-fg-muted">({reviewsCount.toLocaleString()})</span>
           </div>
 
-          <div className="flex items-baseline gap-2.5 mb-1">
+          <div className="flex items-baseline gap-2.5 mb-1 flex-wrap">
             <span className="font-display text-2xl font-bold text-fg">
               {formatPrice(offerPrice)}
             </span>
@@ -824,24 +823,24 @@ export default function ProductDetailPage() {
         </div>
 
         {(deliveryText || returnPolicyText || warrantyText) && (
-          <div className="bg-surface px-4 py-4 border-b border-line flex flex-col gap-3">
-            <div className={`grid ${[deliveryText, returnPolicyText, warrantyText].filter(Boolean).length === 3 ? 'grid-cols-3' : [deliveryText, returnPolicyText, warrantyText].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2.5`}>
+          <div className="bg-surface px-4 py-4 border-b border-line flex flex-col gap-3 w-full max-w-full overflow-hidden">
+            <div className={`grid ${[deliveryText, returnPolicyText, warrantyText].filter(Boolean).length === 3 ? 'grid-cols-3' : [deliveryText, returnPolicyText, warrantyText].filter(Boolean).length === 2 ? 'grid-cols-2' : 'grid-cols-1'} gap-2 sm:gap-2.5`}>
               {deliveryText && (
-                <div className="flex flex-col items-center text-center gap-1.5 rounded-lg border border-line bg-surface px-1.5 py-3">
-                  <Truck className="h-5 w-5 text-fg-muted" strokeWidth={2} />
-                  <span className="text-[11.5px] font-semibold text-fg leading-tight">{deliveryText}</span>
+                <div className="flex flex-col items-center text-center gap-1.5 rounded-lg border border-line bg-surface px-1.5 py-3 min-w-0">
+                  <Truck className="h-5 w-5 text-fg-muted shrink-0" strokeWidth={2} />
+                  <span className="text-[11px] sm:text-[11.5px] font-semibold text-fg leading-tight break-words">{deliveryText}</span>
                 </div>
               )}
               {returnPolicyText && (
-                <div className="flex flex-col items-center text-center gap-1.5 rounded-lg border border-line bg-surface px-1.5 py-3">
-                  <RotateCcw className="h-5 w-5 text-fg-muted" strokeWidth={2} />
-                  <span className="text-[11.5px] font-semibold text-fg leading-tight">{returnPolicyText}</span>
+                <div className="flex flex-col items-center text-center gap-1.5 rounded-lg border border-line bg-surface px-1.5 py-3 min-w-0">
+                  <RotateCcw className="h-5 w-5 text-fg-muted shrink-0" strokeWidth={2} />
+                  <span className="text-[11px] sm:text-[11.5px] font-semibold text-fg leading-tight break-words">{returnPolicyText}</span>
                 </div>
               )}
               {warrantyText && (
-                <div className="flex flex-col items-center text-center gap-1.5 rounded-lg border border-line bg-surface px-1.5 py-3">
-                  <Shield className="h-5 w-5 text-fg-muted" strokeWidth={2} />
-                  <span className="text-[11.5px] font-semibold text-fg leading-tight">{warrantyText}</span>
+                <div className="flex flex-col items-center text-center gap-1.5 rounded-lg border border-line bg-surface px-1.5 py-3 min-w-0">
+                  <Shield className="h-5 w-5 text-fg-muted shrink-0" strokeWidth={2} />
+                  <span className="text-[11px] sm:text-[11.5px] font-semibold text-fg leading-tight break-words">{warrantyText}</span>
                 </div>
               )}
             </div>
@@ -849,18 +848,18 @@ export default function ProductDetailPage() {
         )}
 
         {product.description && (
-          <div className="bg-surface px-4 py-4 border-b border-line">
+          <div className="bg-surface px-4 py-4 border-b border-line w-full max-w-full overflow-hidden">
             <h3 className="text-[13px] font-bold text-fg-muted uppercase tracking-wider mb-2.5">
               Product Description
             </h3>
             <div 
-              className="text-sm text-fg-muted leading-relaxed prose prose-sm max-w-none"
+              className="text-sm text-fg-muted leading-relaxed max-w-full overflow-x-auto break-words product-description-content"
               dangerouslySetInnerHTML={{ __html: product.description }}
             />
           </div>
         )}
 
-        <div className="bg-surface border-b border-line">
+        <div className="bg-surface border-b border-line w-full max-w-full overflow-hidden">
           <h3 className="text-[13px] font-bold text-fg-muted uppercase tracking-wider px-4 pt-4 mb-1">
             Full specifications
           </h3>
@@ -875,52 +874,52 @@ export default function ProductDetailPage() {
             </button>
             {expandedSections.general && (
               <div className="px-4 pb-3.5 divide-y divide-line/40">
-                <div className="grid grid-cols-12 py-2 text-[13px] items-start">
-                  <span className="col-span-4 text-fg-muted font-medium">Name</span>
-                  <span className="col-span-8 text-fg font-medium leading-snug">{product.product_name}</span>
+                <div className="grid grid-cols-12 py-2 text-[13px] items-start gap-2">
+                  <span className="col-span-4 text-fg-muted font-medium break-words">Name</span>
+                  <span className="col-span-8 text-fg font-medium leading-snug break-words">{product.product_name}</span>
                 </div>
                 {product.brand && (
-                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
-                    <span className="col-span-4 text-fg-muted font-medium">Brand</span>
-                    <span className="col-span-8 text-fg font-medium">{product.brand}</span>
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center gap-2">
+                    <span className="col-span-4 text-fg-muted font-medium break-words">Brand</span>
+                    <span className="col-span-8 text-fg font-medium break-words">{product.brand}</span>
                   </div>
                 )}
                 {product.categoryName && (
-                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
-                    <span className="col-span-4 text-fg-muted font-medium">Category</span>
-                    <span className="col-span-8 text-fg font-medium">{product.categoryName}</span>
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center gap-2">
+                    <span className="col-span-4 text-fg-muted font-medium break-words">Category</span>
+                    <span className="col-span-8 text-fg font-medium break-words">{product.categoryName}</span>
                   </div>
                 )}
                 {product.subcategoryName && (
-                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
-                    <span className="col-span-4 text-fg-muted font-medium">Subcategory</span>
-                    <span className="col-span-8 text-fg font-medium">{product.subcategoryName}</span>
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center gap-2">
+                    <span className="col-span-4 text-fg-muted font-medium break-words">Subcategory</span>
+                    <span className="col-span-8 text-fg font-medium break-words">{product.subcategoryName}</span>
                   </div>
                 )}
                 {product.childSubcategoryName && (
-                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
-                    <span className="col-span-4 text-fg-muted font-medium">Type</span>
-                    <span className="col-span-8 text-fg font-medium">{product.childSubcategoryName}</span>
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center gap-2">
+                    <span className="col-span-4 text-fg-muted font-medium break-words">Type</span>
+                    <span className="col-span-8 text-fg font-medium break-words">{product.childSubcategoryName}</span>
                   </div>
                 )}
                 {selectedAttribute?.attributes && typeof selectedAttribute.attributes === 'object' && (
                   Object.entries(selectedAttribute.attributes).map(([k, v]) => (
-                    <div key={k} className="grid grid-cols-12 py-2 text-[13px] items-center">
-                      <span className="col-span-4 text-fg-muted font-medium">{k}</span>
-                      <span className="col-span-8 text-orange font-semibold">{v}</span>
+                    <div key={k} className="grid grid-cols-12 py-2 text-[13px] items-center gap-2">
+                      <span className="col-span-4 text-fg-muted font-medium break-words">{k}</span>
+                      <span className="col-span-8 text-orange font-semibold break-words">{v}</span>
                     </div>
                   ))
                 )}
                 {product.sku && (
-                  <div className="grid grid-cols-12 py-2 text-[13px] items-center">
-                    <span className="col-span-4 text-fg-muted font-medium">SKU</span>
-                    <span className="col-span-8 text-fg font-medium">{product.sku}</span>
+                  <div className="grid grid-cols-12 py-2 text-[13px] items-center gap-2">
+                    <span className="col-span-4 text-fg-muted font-medium break-words">SKU</span>
+                    <span className="col-span-8 text-fg font-medium break-words">{product.sku}</span>
                   </div>
                 )}
                 {Array.isArray(product.specifications) && product.specifications.map((spec, sIdx) => (
-                  <div key={sIdx} className="grid grid-cols-12 py-2 text-[13px] items-center">
-                    <span className="col-span-4 text-fg-muted font-medium">{spec.title || spec.name || spec.key || `Spec ${sIdx + 1}`}</span>
-                    <span className="col-span-8 text-fg font-medium">{spec.value || spec.description || ''}</span>
+                  <div key={sIdx} className="grid grid-cols-12 py-2 text-[13px] items-center gap-2">
+                    <span className="col-span-4 text-fg-muted font-medium break-words">{spec.title || spec.name || spec.key || `Spec ${sIdx + 1}`}</span>
+                    <span className="col-span-8 text-fg font-medium break-words">{spec.value || spec.description || ''}</span>
                   </div>
                 ))}
               </div>
@@ -929,12 +928,12 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Mobile Ratings & Customer Reviews Section */}
-        <div className="mt-3 px-3">
+        <div className="mt-3 px-3 w-full max-w-full overflow-hidden">
           <EnhancedProductReviews product={product} rating={rating} reviewsCount={reviewsCount} />
         </div>
 
         {relatedProducts.length > 0 && (
-          <div className="bg-surface px-4 py-4 mt-3 border-t border-line">
+          <div className="bg-surface px-4 py-4 mt-3 border-t border-line w-full max-w-full overflow-hidden">
             <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-[16px] font-bold text-fg">
                 Related products
@@ -944,7 +943,7 @@ export default function ProductDetailPage() {
                 <span className="text-[11px] font-semibold">&gt;</span>
               </button>
             </div>
-            <div className="no-scrollbar flex gap-3.5 overflow-x-auto pb-2">
+            <div className="no-scrollbar flex gap-3.5 overflow-x-auto pb-2 max-w-full">
               {relatedProducts.map((p) => {
                 const original = parseFloat(p.orginal_rate || p.mrp || 0)
                 const offer = parseFloat(p.offer_price || p.price || 0)
@@ -969,7 +968,7 @@ export default function ProductDetailPage() {
                       )}
                     </div>
                     <div className="p-3 flex flex-col gap-1">
-                      <h4 className="text-[12.5px] font-medium text-fg line-clamp-2 leading-snug min-h-[34px]">
+                      <h4 className="text-[12.5px] font-medium text-fg line-clamp-2 leading-snug min-h-[34px] break-words">
                         {p.product_name}
                       </h4>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
@@ -991,20 +990,20 @@ export default function ProductDetailPage() {
         )}
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-4 py-3 pb-safe shadow-lg flex items-center gap-3">
-        <div className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-1">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-line px-3 sm:px-4 py-2.5 sm:py-3 pb-safe shadow-lg flex items-center gap-2 sm:gap-3 w-full max-w-full">
+        <div className="flex items-center gap-1 sm:gap-1.5 rounded-lg border border-line bg-surface-2 px-1 shrink-0">
           <button
             onClick={() => handleQuantityChange(-1)}
-            className="grid h-9 w-8 place-items-center active:bg-surface-3 rounded transition-colors"
+            className="grid h-9 w-7 sm:w-8 place-items-center active:bg-surface-3 rounded transition-colors"
           >
             <Minus className="h-3.5 w-3.5 text-fg" strokeWidth={2.5} />
           </button>
-          <span className="min-w-[18px] text-center text-[13px] font-bold text-fg">
+          <span className="min-w-[16px] sm:min-w-[18px] text-center text-[12.5px] sm:text-[13px] font-bold text-fg">
             {quantity}
           </span>
           <button
             onClick={() => handleQuantityChange(1)}
-            className="grid h-9 w-8 place-items-center active:bg-surface-3 rounded transition-colors"
+            className="grid h-9 w-7 sm:w-8 place-items-center active:bg-surface-3 rounded transition-colors"
           >
             <Plus className="h-3.5 w-3.5 text-fg" strokeWidth={2.5} />
           </button>
@@ -1012,7 +1011,7 @@ export default function ProductDetailPage() {
 
         <button
           onClick={() => product && handleAddToCart(product, quantity)}
-          className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg border py-2.5 px-1.5 text-[12px] sm:text-[13px] font-bold transition-all whitespace-nowrap ${
+          className={`flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg border py-2.5 px-2 text-[12px] sm:text-[13px] font-bold transition-all truncate ${
             product && isInCart(product.id, currentAttrId)
               ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-xs'
               : 'border-navy bg-surface text-navy active:bg-navy active:text-white'
@@ -1021,19 +1020,19 @@ export default function ProductDetailPage() {
           {product && isInCart(product.id, currentAttrId) ? (
             <>
               <Check className="h-4 w-4 shrink-0 text-emerald-600" strokeWidth={2.5} />
-              <span className="whitespace-nowrap">Added to Cart</span>
+              <span className="truncate">In Cart</span>
             </>
           ) : (
             <>
               <ShoppingCart className="h-4 w-4 shrink-0" strokeWidth={2.5} />
-              <span className="whitespace-nowrap">Add to Cart</span>
+              <span className="truncate">Add to Cart</span>
             </>
           )}
         </button>
 
         <button
           onClick={handleBuyNow}
-          className="flex-1 rounded-lg bg-orange py-2.5 px-2 text-[12px] sm:text-[13px] font-bold text-white active:bg-orange-deep transition-colors shadow whitespace-nowrap"
+          className="flex-1 min-w-0 flex items-center justify-center rounded-lg bg-orange py-2.5 px-2 text-[12px] sm:text-[13px] font-bold text-white active:bg-orange-deep transition-colors shadow truncate"
         >
           Buy now
         </button>
@@ -1059,9 +1058,9 @@ export default function ProductDetailPage() {
       </div>
 
       <div className="mx-auto max-w-[1320px] px-6 py-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,440px)_minmax(0,1fr)_340px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,440px)_minmax(0,1fr)_340px] items-start">
 
-          <div className="lg:sticky lg:top-4 lg:self-start">
+          <div className="lg:sticky lg:top-[124px] lg:self-start">
             <div className="relative overflow-hidden rounded-xl border border-line bg-surface shadow-xs">
               <div className="relative aspect-square bg-[#FAF5FF] flex items-center justify-center p-4">
                 {allImages.length > 0 ? (
@@ -1193,12 +1192,12 @@ export default function ProductDetailPage() {
             )}
 
             {product.description && (
-              <div className="mt-6 rounded-xl border border-line bg-surface p-4 shadow-xs">
+              <div className="mt-6 rounded-xl border border-line bg-surface p-4 shadow-xs max-w-full overflow-hidden">
                 <h3 className="text-[13px] font-bold text-fg-muted uppercase tracking-wider mb-2.5">
                   Product Description
                 </h3>
                 <div 
-                  className="text-sm text-fg-muted leading-relaxed prose prose-sm max-w-none"
+                  className="text-sm text-fg-muted leading-relaxed max-w-full overflow-x-auto break-words product-description-content"
                   dangerouslySetInnerHTML={{ __html: product.description }}
                 />
               </div>
@@ -1262,7 +1261,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="xl:sticky xl:top-4 xl:self-start">
+          <div className="xl:sticky xl:top-[124px] xl:self-start">
             <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
               <div className="p-4">
                 <div className="flex items-baseline gap-2.5 mb-3">
