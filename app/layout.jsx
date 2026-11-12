@@ -45,6 +45,15 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
           <WhatsAppWidget />
+          {/* Jenideals AI Assistant Widget */}
+          <Script 
+            id="jenideals-ai-widget"
+            src="/jenideals-widget.js?v=no_links_v5" 
+            data-api-url=" https://jenideals-ai-805973026746.us-central1.run.app" 
+            data-client-id="jenideals_store"
+            strategy="afterInteractive" 
+          />
+        </Providers>
         </Providers>
       </body>
     </html>
