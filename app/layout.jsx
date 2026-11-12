@@ -54,7 +54,6 @@ export default function RootLayout({ children }) {
             strategy="afterInteractive" 
           />
         </Providers>
-        </Providers>
       </body>
     </html>
   )
