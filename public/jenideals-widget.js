@@ -284,7 +284,7 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-           cursor: pointer;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -308,7 +308,7 @@
             background: transparent;
             font-weight: 600;
             font-size: 13px;
-           color: #94a3b8;
+            color: #94a3b8;
             cursor: pointer;
             border-radius: 8px;
             transition: all 0.2s;
@@ -329,7 +329,7 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-           gap: 16px;
+            gap: 16px;
         }
         .j-welcome-card {
             background: #ffffff;
@@ -690,8 +690,11 @@
         }
         .j-product-card {
             position: relative;
-            min-width: 200px;
-            max-width: 210px;
+            width: 205px;
+            min-width: 205px;
+            max-width: 205px;
+            display: flex;
+            flex-direction: column;
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
@@ -707,6 +710,8 @@
         .j-product-img {
             width: 100%;
             height: 145px;
+            flex-shrink: 0;
+            box-sizing: border-box;
             object-fit: contain;
             background: #ffffff;
             padding: 6px;
@@ -714,6 +719,27 @@
         }
         .j-product-details {
             padding: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .j-product-details .j-product-title {
+            min-height: 34px;
+        }
+        .j-product-details .j-product-actions {
+            margin-top: auto !important;
+            padding-top: 8px;
+        }
+        .j-product-meta {
+            font-size: 11px;
+            font-weight: 700;
+            color: #d97706;
+            height: 16px;
+            line-height: 16px;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .j-product-title {
             font-size: 13px;
@@ -5315,6 +5341,7 @@
                     <img class="j-product-img" src="${imgUrl}" alt="${pTitle}" onerror="this.onerror=null;this.src=window.JENI_FALLBACK_PRODUCT_IMAGE || ''" />
                     <div class="j-product-details">
                         <div class="j-product-title">${pTitle}</div>
+                        <div class="j-product-meta"></div>
                         <div class="j-product-price">AED ${pPrice}</div>
                         <div class="j-product-actions" style="margin-top: 6px;">
                             <button class="j-cart-btn j-wishlist-move-btn" style="width: 100%;">🛒 Move to Cart</button>
@@ -5407,7 +5434,7 @@
                     <img class="j-product-img" src="${imgUrl}" alt="${pTitle}" onerror="this.onerror=null;this.src=window.JENI_FALLBACK_PRODUCT_IMAGE || ''" />
                     <div class="j-product-details">
                         <div class="j-product-title">${pTitle}</div>
-                        ${sizeLabel ? `<div style="font-size: 11px; font-weight: 700; color: #d97706; margin-bottom: 3px;">📏 Size: ${sizeLabel}</div>` : ''}
+                        <div class="j-product-meta">${sizeLabel ? `📏 Size: ${sizeLabel}` : ''}</div>
                         <div class="j-product-price">${cartCurr}${pPrice} <span style="font-size: 11px; color: #64748b; font-weight: 500;">(Qty: ${pQty})</span></div>
                         <div class="j-product-actions" style="margin-top: 6px;">
                             <button class="j-product-btn j-cart-order-btn" style="width: 100%; text-align: center;">⚡ Checkout Now</button>
@@ -5758,6 +5785,11 @@
         showTypingIndicator();
         try {
             const currentUid = getUserId();
+            let currentProdId = null;
+            try {
+                const match = window.location.pathname.match(/\/product\/(\d+)/);
+                if (match && match[1]) currentProdId = String(match[1]);
+            } catch (e) {}
             const res = await fetch(`${API_URL}/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -5767,7 +5799,8 @@
                     client_id: CLIENT_ID,
                     country_id: getCountryId(),
                     wishlist_items: getLocalStorageWishlist(),
-                    cart_items: getLocalStorageCart()
+                    cart_items: getLocalStorageCart(),
+                    current_product_id: currentProdId
                 })
             });
             hideTypingIndicator();
