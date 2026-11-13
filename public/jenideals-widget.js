@@ -179,7 +179,7 @@
         }
         #j-widget-trigger:hover {
             transform: scale(1.08) translateY(-2px);
-            box-shadow: 0 12px 28px rgba(245, 158, 11, 0.5);
+           box-shadow: 0 12px 28px rgba(245, 158, 11, 0.5);
         }
         #j-widget-trigger svg {
             width: 28px;
@@ -201,20 +201,20 @@
             position: fixed;
             bottom: 96px;
             right: 24px;
-            width: 440px;
-            max-width: calc(100vw - 32px);
+           width: 440px;
+           max-width: calc(100vw - 32px);
             height: 680px;
             max-height: calc(100vh - 110px);
             background: #ffffff;
             border-radius: 20px;
             box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
             display: flex;
-            flex-direction: column;
+           flex-direction: column;
             overflow: hidden;
             z-index: 999999;
-            opacity: 0;
+           opacity: 0;
             transform: translateY(20px) scale(0.95);
-            pointer-events: none;
+           pointer-events: none;
             transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         #j-widget-window.j-open {
@@ -233,9 +233,9 @@
             border-bottom: 2px solid #f5690bff;
         }
         .j-header-info {
-            display: flex;
+           display: flex;
             align-items: center;
-            gap: 12px;
+           gap: 12px;
         }
         .j-avatar {
             width: 42px;
@@ -246,8 +246,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 2px #f59e0b;
-            overflow: hidden;
+           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 2px #f59e0b;
+           overflow: hidden;
             padding: 3px;
             flex-shrink: 0;
         }
@@ -284,7 +284,7 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            cursor: pointer;
+           cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -308,7 +308,7 @@
             background: transparent;
             font-weight: 600;
             font-size: 13px;
-            color: #94a3b8;
+           color: #94a3b8;
             cursor: pointer;
             border-radius: 8px;
             transition: all 0.2s;
@@ -329,7 +329,7 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+           gap: 16px;
         }
         .j-welcome-card {
             background: #ffffff;
